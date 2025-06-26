@@ -72,13 +72,14 @@ function App() {
           updatedAt: new Date().toISOString()
         };
 
+        // Add to status history if status changed
         if (updates.status && updates.status !== item.status) {
           updatedItem.statusHistory = [
             ...item.statusHistory,
             {
               status: updates.status,
               timestamp: new Date().toISOString(),
-              notes: updates.statusNotes || `Status changed to ${updates.status}`
+              notes: updates.statusNotes || ''
             }
           ];
         }
@@ -111,6 +112,10 @@ function App() {
     }
   };
 
+  const deleteArchivedItem = (id) => {
+    setArchivedItems(prev => prev.filter(item => item.id !== id));
+  };
+
   const handlePrintReceipt = (item) => {
     setPrintItem(item);
   };
@@ -123,7 +128,7 @@ function App() {
     <Router>
       <div className="min-h-screen bg-neutral-200">
         <Navbar />
-        <motion.main
+        <motion.main 
           className="pt-16"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
@@ -144,8 +149,9 @@ function App() {
               element={
                 <TrackingView 
                   items={items} 
-                  archivedItems={archivedItems} 
-                  onArchiveItem={archiveItem} 
+                  archivedItems={archivedItems}
+                  onArchiveItem={archiveItem}
+                  onDeleteArchivedItem={deleteArchivedItem}
                 />
               } 
             />

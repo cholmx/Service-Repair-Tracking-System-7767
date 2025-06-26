@@ -5,14 +5,15 @@ import * as FiIcons from 'react-icons/fi';
 import SafeIcon from '../common/SafeIcon';
 import StatusBadge from '../components/StatusBadge';
 
-const { FiSearch, FiFilter, FiEye, FiArchive, FiX } = FiIcons;
+const { FiSearch, FiFilter, FiEye, FiArchive, FiX, FiRefreshCw, FiTrash2 } = FiIcons;
 
-const TrackingView = ({ items, onArchiveItem, archivedItems }) => {
+const TrackingView = ({ items, onArchiveItem, archivedItems, onDeleteArchivedItem }) => {
   const [searchParams, setSearchParams] = useSearchParams();
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [sortBy, setSortBy] = useState('newest');
   const [showArchived, setShowArchived] = useState(false);
+  const [deleteConfirmId, setDeleteConfirmId] = useState(null);
 
   // Get filter from URL params
   useEffect(() => {
@@ -26,7 +27,8 @@ const TrackingView = ({ items, onArchiveItem, archivedItems }) => {
 
   const filteredItems = activeItems
     .filter(item => {
-      const matchesSearch = item.customerName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      const matchesSearch = 
+        item.customerName.toLowerCase().includes(searchTerm.toLowerCase()) ||
         item.itemType.toLowerCase().includes(searchTerm.toLowerCase()) ||
         item.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
         item.id.includes(searchTerm) ||
@@ -58,18 +60,47 @@ const TrackingView = ({ items, onArchiveItem, archivedItems }) => {
     onArchiveItem(itemId);
   };
 
+  const handleDeleteConfirm = (itemId, e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDeleteConfirmId(itemId);
+  };
+
+  const handleDeleteCancel = () => {
+    setDeleteConfirmId(null);
+  };
+
+  const handleDeleteExecute = () => {
+    if (deleteConfirmId) {
+      onDeleteArchivedItem(deleteConfirmId);
+      setDeleteConfirmId(null);
+    }
+  };
+
   const clearFilter = () => {
     setStatusFilter('all');
+    setSearchParams({});
+  };
+
+  const toggleArchiveView = () => {
+    setShowArchived(!showArchived);
+    // Clear filters when switching views
+    setStatusFilter('all');
+    setSearchTerm('');
     setSearchParams({});
   };
 
   // Function to get display name for filter
   const getFilterDisplayName = (filter) => {
     switch (filter) {
-      case 'waiting-parts': return 'Waiting on Parts';
-      case 'in-progress': return 'In Progress';
-      case 'ready': return 'Ready for Pickup or Delivery';
-      default: return filter.charAt(0).toUpperCase() + filter.slice(1);
+      case 'waiting-parts':
+        return 'Waiting on Parts';
+      case 'in-progress':
+        return 'In Progress';
+      case 'ready':
+        return 'Ready for Pickup or Delivery';
+      default:
+        return filter.charAt(0).toUpperCase() + filter.slice(1);
     }
   };
 
@@ -83,28 +114,40 @@ const TrackingView = ({ items, onArchiveItem, archivedItems }) => {
         <div className="mb-8">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-3xl font-bold text-neutral-900 mb-2">Track Service Orders</h1>
-              <p className="text-neutral-600">Search and monitor all Service Orders</p>
+              <h1 className="text-3xl font-bold text-neutral-900 mb-2">
+                {showArchived ? 'Archived Service Orders' : 'Track Service Orders'}
+              </h1>
+              <p className="text-neutral-600">
+                {showArchived 
+                  ? `View ${archivedItems.length} archived Service Orders`
+                  : 'Search and monitor all active Service Orders'
+                }
+              </p>
             </div>
-            <div className="flex items-center space-x-4">
+            <div className="flex items-center space-x-3">
               <button
-                onClick={() => setShowArchived(!showArchived)}
-                className={`px-4 py-2 rounded-lg font-medium transition-colors duration-200 ${
-                  showArchived
-                    ? 'bg-neutral-600 text-white'
+                onClick={toggleArchiveView}
+                className={`flex items-center px-4 py-2 rounded-lg font-medium transition-all duration-200 ${
+                  showArchived 
+                    ? 'bg-primary-500 text-white hover:bg-primary-600' 
                     : 'bg-neutral-200 text-neutral-700 hover:bg-neutral-300'
                 }`}
               >
-                {showArchived ? 'Show Active' : 'Show Archived'}
+                <SafeIcon icon={showArchived ? FiRefreshCw : FiArchive} className="mr-2" />
+                {showArchived ? 'Back to Active' : 'View Archived'}
               </button>
             </div>
           </div>
-          {statusFilter !== 'all' && (
+          
+          {statusFilter !== 'all' && !showArchived && (
             <div className="mt-4 flex items-center space-x-2">
               <span className="text-sm text-neutral-600">Filtered by:</span>
               <div className="flex items-center bg-primary-100 text-primary-800 px-3 py-1 rounded-full text-sm font-medium">
                 {getFilterDisplayName(statusFilter)}
-                <button onClick={clearFilter} className="ml-2 hover:text-primary-900">
+                <button
+                  onClick={clearFilter}
+                  className="ml-2 hover:text-primary-900"
+                >
                   <SafeIcon icon={FiX} className="text-sm" />
                 </button>
               </div>
@@ -125,26 +168,30 @@ const TrackingView = ({ items, onArchiveItem, archivedItems }) => {
                 className="w-full pl-10 pr-4 py-3 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent bg-white"
               />
             </div>
-            <div className="relative">
-              <SafeIcon icon={FiFilter} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-neutral-400" />
-              <select
-                value={statusFilter}
-                onChange={(e) => {
-                  setStatusFilter(e.target.value);
-                  if (e.target.value === 'all') {
-                    setSearchParams({});
-                  }
-                }}
-                className="w-full pl-10 pr-4 py-3 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent appearance-none bg-white"
-              >
-                <option value="all">All Statuses</option>
-                <option value="received">Received</option>
-                <option value="in-progress">In Progress</option>
-                <option value="waiting-parts">Waiting on Parts</option>
-                <option value="ready">Ready for Pickup or Delivery</option>
-                <option value="completed">Completed</option>
-              </select>
-            </div>
+            
+            {!showArchived && (
+              <div className="relative">
+                <SafeIcon icon={FiFilter} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-neutral-400" />
+                <select
+                  value={statusFilter}
+                  onChange={(e) => {
+                    setStatusFilter(e.target.value);
+                    if (e.target.value === 'all') {
+                      setSearchParams({});
+                    }
+                  }}
+                  className="w-full pl-10 pr-4 py-3 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent appearance-none bg-white"
+                >
+                  <option value="all">All Statuses</option>
+                  <option value="received">Received</option>
+                  <option value="in-progress">In Progress</option>
+                  <option value="waiting-parts">Waiting on Parts</option>
+                  <option value="ready">Ready for Pickup or Delivery</option>
+                  <option value="completed">Completed</option>
+                </select>
+              </div>
+            )}
+            
             <select
               value={sortBy}
               onChange={(e) => setSortBy(e.target.value)}
@@ -162,7 +209,10 @@ const TrackingView = ({ items, onArchiveItem, archivedItems }) => {
           {filteredItems.length === 0 ? (
             <div className="p-12 text-center">
               <p className="text-neutral-500 text-lg">
-                {showArchived ? 'No archived Service Orders found' : 'No Service Orders found matching your criteria'}
+                {showArchived 
+                  ? 'No archived Service Orders found matching your criteria'
+                  : 'No Service Orders found matching your criteria'
+                }
               </p>
             </div>
           ) : (
@@ -183,7 +233,7 @@ const TrackingView = ({ items, onArchiveItem, archivedItems }) => {
                       Status
                     </th>
                     <th className="px-6 py-4 text-left text-xs font-medium text-neutral-700 uppercase tracking-wider">
-                      Created
+                      {showArchived ? 'Archived' : 'Created'}
                     </th>
                     <th className="px-6 py-4 text-left text-xs font-medium text-neutral-700 uppercase tracking-wider">
                       Actions
@@ -229,7 +279,7 @@ const TrackingView = ({ items, onArchiveItem, archivedItems }) => {
                         <StatusBadge status={item.status} />
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-neutral-500">
-                        {new Date(item.createdAt).toLocaleDateString()}
+                        {new Date(showArchived ? item.archivedAt : item.createdAt).toLocaleDateString()}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="flex items-center space-x-2">
@@ -240,6 +290,7 @@ const TrackingView = ({ items, onArchiveItem, archivedItems }) => {
                             <SafeIcon icon={FiEye} className="mr-1" />
                             View
                           </Link>
+                          
                           {!showArchived && (item.status === 'completed' || item.status === 'ready') && (
                             <button
                               onClick={(e) => handleArchive(item.id, e)}
@@ -248,6 +299,17 @@ const TrackingView = ({ items, onArchiveItem, archivedItems }) => {
                             >
                               <SafeIcon icon={FiArchive} className="mr-1" />
                               Archive
+                            </button>
+                          )}
+                          
+                          {showArchived && (
+                            <button
+                              onClick={(e) => handleDeleteConfirm(item.id, e)}
+                              className="inline-flex items-center px-3 py-1 rounded-md text-sm font-medium bg-red-100 text-red-700 hover:bg-red-200 transition-colors duration-200"
+                              title="Permanently delete this archived Service Order"
+                            >
+                              <SafeIcon icon={FiTrash2} className="mr-1" />
+                              Delete
                             </button>
                           )}
                         </div>
@@ -260,6 +322,54 @@ const TrackingView = ({ items, onArchiveItem, archivedItems }) => {
           )}
         </div>
       </motion.div>
+
+      {/* Delete Confirmation Modal */}
+      {deleteConfirmId && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.9 }}
+            className="bg-white rounded-lg shadow-xl max-w-md w-full p-6"
+          >
+            <div className="flex items-center mb-4">
+              <div className="flex-shrink-0 w-10 h-10 bg-red-100 rounded-full flex items-center justify-center">
+                <SafeIcon icon={FiTrash2} className="text-red-600 text-lg" />
+              </div>
+              <div className="ml-4">
+                <h3 className="text-lg font-medium text-neutral-900">
+                  Delete Archived Service Order
+                </h3>
+                <p className="text-sm text-neutral-500">
+                  Service Order #{deleteConfirmId.slice(-6)}
+                </p>
+              </div>
+            </div>
+            
+            <div className="mb-6">
+              <p className="text-neutral-700">
+                Are you sure you want to permanently delete this archived service order? 
+                This action cannot be undone and all data will be lost.
+              </p>
+            </div>
+            
+            <div className="flex justify-end space-x-3">
+              <button
+                onClick={handleDeleteCancel}
+                className="px-4 py-2 text-sm font-medium text-neutral-700 bg-neutral-200 rounded-lg hover:bg-neutral-300 transition-colors duration-200"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleDeleteExecute}
+                className="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700 transition-colors duration-200"
+              >
+                Delete Permanently
+              </button>
+            </div>
+          </motion.div>
+        </div>
+      )}
     </div>
   );
 };

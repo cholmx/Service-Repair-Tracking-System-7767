@@ -6,10 +6,114 @@ const { FiTool } = FiIcons;
 
 const PrintReceipt = ({ item, onClose }) => {
   const handlePrint = () => {
-    window.print();
+    // Create a new window for printing
+    const printWindow = window.open('', '_blank');
+    const printContent = document.querySelector('.print-receipt').innerHTML;
+    
+    printWindow.document.write(`
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <title>Service Receipt - #${item.id.slice(-6)}</title>
+          <style>
+            * { margin: 0; padding: 0; box-sizing: border-box; }
+            body { 
+              font-family: Arial, sans-serif; 
+              font-size: 10pt; 
+              line-height: 1.2; 
+              color: #000;
+              background: white;
+            }
+            .print-receipt { padding: 20px; max-width: 600px; margin: 0 auto; }
+            h1 { font-size: 14pt; margin-bottom: 4px; text-align: center; }
+            h2 { font-size: 11pt; margin-bottom: 8px; border-bottom: 1px solid #000; padding-bottom: 2px; }
+            h3 { font-size: 10pt; margin-bottom: 4px; }
+            .text-center { text-align: center; }
+            .text-right { text-align: right; }
+            .font-bold { font-weight: bold; }
+            .font-medium { font-weight: 500; }
+            .text-sm { font-size: 9pt; }
+            .text-xs { font-size: 8pt; }
+            .text-lg { font-size: 12pt; }
+            .mb-1 { margin-bottom: 2px; }
+            .mb-2 { margin-bottom: 4px; }
+            .mb-3 { margin-bottom: 6px; }
+            .mb-4 { margin-bottom: 8px; }
+            .mt-1 { margin-top: 2px; }
+            .mt-2 { margin-top: 4px; }
+            .mt-3 { margin-top: 6px; }
+            .pt-1 { padding-top: 2px; }
+            .pt-2 { padding-top: 4px; }
+            .pb-1 { padding-bottom: 2px; }
+            .border-t { border-top: 1px solid #000; }
+            .border-t-2 { border-top: 2px solid #000; }
+            .border-b { border-bottom: 1px solid #000; }
+            .grid { display: grid; gap: 12px; }
+            .grid-cols-2 { grid-template-columns: 1fr 1fr; }
+            .flex { display: flex; }
+            .justify-between { justify-content: space-between; }
+            .justify-center { justify-content: center; }
+            .items-center { align-items: center; }
+            .space-y-1 > * + * { margin-top: 2px; }
+            .space-x-2 > * + * { margin-left: 4px; }
+            .text-neutral-500 { color: #666; }
+            .text-neutral-600 { color: #555; }
+            .text-neutral-700 { color: #444; }
+            .text-neutral-900 { color: #000; }
+            .text-green-700 { color: #15803d; }
+            .text-blue-700 { color: #1d4ed8; }
+            .leading-tight { line-height: 1.1; }
+            .truncate { 
+              overflow: hidden; 
+              text-overflow: ellipsis; 
+              white-space: nowrap; 
+            }
+            .pr-2 { padding-right: 4px; }
+            .flex-1 { flex: 1; }
+            .bg-blue-50 { background-color: #eff6ff; }
+            .p-2 { padding: 8px; }
+            .rounded { border-radius: 4px; }
+            @media print {
+              body { print-color-adjust: exact; }
+              .print-receipt { padding: 10px; }
+              .bg-blue-50 { background-color: #f8f9fa !important; }
+            }
+          </style>
+        </head>
+        <body>
+          <div class="print-receipt">${printContent}</div>
+          <script>
+            window.onload = function() {
+              window.print();
+              window.onafterprint = function() {
+                window.close();
+              };
+            };
+          </script>
+        </body>
+      </html>
+    `);
+    
+    printWindow.document.close();
   };
 
   const currentDate = new Date().toLocaleDateString();
+
+  // Get the latest "ready" status update notes
+  const getReadyStatusNotes = () => {
+    if (!item.statusHistory || !Array.isArray(item.statusHistory)) return null;
+    
+    // Find the most recent "ready" status entry
+    const readyStatusEntry = item.statusHistory
+      .slice()
+      .reverse()
+      .find(entry => entry.status === 'ready');
+    
+    return readyStatusEntry?.notes || null;
+  };
+
+  const readyStatusNotes = getReadyStatusNotes();
+  const showStatusNotes = item.status === 'ready' && readyStatusNotes && readyStatusNotes.trim() !== '';
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
@@ -106,12 +210,21 @@ const PrintReceipt = ({ item, onClose }) => {
             </div>
           </div>
 
+          {/* Service Complete Notes - Only show when status is "ready" and notes exist */}
+          {showStatusNotes && (
+            <div className="mb-4 print:mb-3">
+              <div className="bg-blue-50 p-2 rounded text-xs">
+                <div className="text-blue-700 font-medium mb-1">Service Complete:</div>
+                <div className="text-neutral-700 leading-tight">{readyStatusNotes}</div>
+              </div>
+            </div>
+          )}
+
           {/* Service Details */}
           <div className="mb-4 print:mb-3">
             <h2 className="text-sm font-semibold text-neutral-900 mb-2 border-b border-neutral-200 pb-1">
               Service Details
             </h2>
-            
             {/* Parts and Labor in two columns */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 print:gap-3">
               {/* Parts Section */}

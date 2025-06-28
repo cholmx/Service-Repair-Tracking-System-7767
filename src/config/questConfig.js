@@ -1,0 +1,8 @@
+export default {
+  QUEST_ONBOARDING_QUESTID: 'c-greta-onboarding',
+  USER_ID: 'u-d70f5a37-8be9-407f-9ed7-1f3471a8809f',
+  APIKEY: 'k-38d768f0-d392-4862-ad67-b3511cfa770f',
+  TOKEN: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiJ1LWQ3MGY1YTM3LThiZTktNDA3Zi05ZWQ3LTFmMzQ3MWE4ODA5ZiIsImlhdCI6MTc1MDg5OTgzNSwiZXhwIjoxNzUzNDkxODM1fQ.9DZabYFiCqVrOhTGRfwp-RbmeJpRfkQ4vRACrOpWuyE',
+  ENTITYID: 'e-9ca01d3e-f0fa-49a2-b30f-5db5415de1f6',
+  PRIMARY_COLOR: '#DD563E' // Extracted from existing theme
+};

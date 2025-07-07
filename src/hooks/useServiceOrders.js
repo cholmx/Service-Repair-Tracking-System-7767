@@ -1,105 +1,90 @@
-import { useState, useEffect } from 'react';
-import { useAuth } from '../contexts/AuthContext';
-import { supabase } from '../lib/supabase';
+import { useState, useEffect } from 'react'
+import { supabase } from '../lib/supabase'
 
 export const useServiceOrders = () => {
-  const [items, setItems] = useState([]);
-  const [archivedItems, setArchivedItems] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const { user, userProfile, isTrialExpired } = useAuth();
+  const [items, setItems] = useState([])
+  const [archivedItems, setArchivedItems] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(null)
+  const [isOnline, setIsOnline] = useState(navigator.onLine)
 
-  // Subscription limits
-  const getItemLimit = () => {
-    if (!userProfile) return 0;
-    switch (userProfile.subscription_tier) {
-      case 'pro':
-        return 1000;
-      case 'premium':
-        return 5000;
-      case 'free':
-      default:
-        return 50;
-    }
-  };
-
-  const fetchServiceOrders = async () => {
-    if (!user) return;
-
-    try {
-      setLoading(true);
-
-      // Fetch active service orders
-      const { data: activeOrders, error: activeError } = await supabase
-        .from('service_orders_st847291')
-        .select(`
-          *,
-          status_history:status_history_st847291(*)
-        `)
-        .eq('user_id', user.id)
-        .neq('status', 'archived')
-        .order('created_at', { ascending: false });
-
-      if (activeError) throw activeError;
-
-      // Fetch archived service orders
-      const { data: archivedOrders, error: archivedError } = await supabase
-        .from('service_orders_st847291')
-        .select(`
-          *,
-          status_history:status_history_st847291(*)
-        `)
-        .eq('user_id', user.id)
-        .eq('status', 'archived')
-        .order('archived_at', { ascending: false });
-
-      if (archivedError) throw archivedError;
-
-      // Process the data to match the existing format
-      const processedActive = activeOrders?.map(order => ({
-        ...order,
-        statusHistory: order.status_history || []
-      })) || [];
-
-      const processedArchived = archivedOrders?.map(order => ({
-        ...order,
-        statusHistory: order.status_history || []
-      })) || [];
-
-      setItems(processedActive);
-      setArchivedItems(processedArchived);
-    } catch (error) {
-      console.error('Error fetching service orders:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
+  // Monitor online status
   useEffect(() => {
-    fetchServiceOrders();
-  }, [user]);
+    const handleOnline = () => setIsOnline(true)
+    const handleOffline = () => setIsOnline(false)
 
-  const addItem = async (formData) => {
-    if (!user) throw new Error('User not authenticated');
+    window.addEventListener('online', handleOnline)
+    window.addEventListener('offline', handleOffline)
 
-    const itemLimit = getItemLimit();
-    if (items.length >= itemLimit) {
-      throw new Error(`You've reached your limit of ${itemLimit} service orders.`);
+    return () => {
+      window.removeEventListener('online', handleOnline)
+      window.removeEventListener('offline', handleOffline)
     }
+  }, [])
 
-    if (isTrialExpired && userProfile?.subscription_tier === 'free') {
-      throw new Error('Your free trial has expired. Please upgrade to continue adding service orders.');
-    }
+  // Load data from Supabase on mount
+  useEffect(() => {
+    loadServiceOrders()
+  }, [])
 
+  const loadServiceOrders = async () => {
     try {
-      const newOrders = [];
-      const statusHistoryEntries = [];
+      setLoading(true)
+      setError(null)
 
+      // Load active service orders (not archived)
+      const { data: activeOrders, error: activeError } = await supabase
+        .from('service_orders_public_st847291')
+        .select(`
+          *,
+          status_history:status_history_public_st847291(*)
+        `)
+        .is('archived_at', null)
+        .order('created_at', { ascending: false })
+
+      if (activeError) throw activeError
+
+      // Load archived service orders
+      const { data: archivedOrders, error: archivedError } = await supabase
+        .from('service_orders_public_st847291')
+        .select(`
+          *,
+          status_history:status_history_public_st847291(*)
+        `)
+        .not('archived_at', 'is', null)
+        .order('archived_at', { ascending: false })
+
+      if (archivedError) throw archivedError
+
+      // Transform data to match expected format
+      const transformOrder = (order) => ({
+        ...order,
+        statusHistory: order.status_history || []
+      })
+
+      setItems(activeOrders.map(transformOrder))
+      setArchivedItems(archivedOrders.map(transformOrder))
+
+    } catch (err) {
+      console.error('Error loading service orders:', err)
+      setError(err.message || 'Failed to load service orders')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  // Add a new service order
+  const addItem = async (formData) => {
+    try {
+      setError(null)
+      const newOrders = []
+      
       // Create service orders for each item
-      for (const [itemIndex, item] of formData.items.entries()) {
-        const orderId = crypto.randomUUID();
-        const order = {
+      for (const item of formData.items) {
+        const orderId = crypto.randomUUID()
+        
+        const orderData = {
           id: orderId,
-          user_id: user.id,
           customer_name: formData.customerName,
           customer_phone: formData.customerPhone,
           customer_email: formData.customerEmail || null,
@@ -109,151 +94,243 @@ export const useServiceOrders = () => {
           description: item.description,
           urgency: formData.urgency,
           expected_completion: formData.expectedCompletion || null,
-          status: 'received'
-        };
-
-        newOrders.push(order);
-        statusHistoryEntries.push({
-          service_order_id: orderId,
           status: 'received',
-          notes: `${item.quantity} x ${item.itemType} received and logged into system`
-        });
+          parts: [],
+          labor: [],
+          parts_total: 0,
+          labor_total: 0,
+          tax_rate: 0,
+          tax: 0,
+          subtotal: 0,
+          total: 0
+        }
+
+        // Insert service order
+        const { data: insertedOrder, error: insertError } = await supabase
+          .from('service_orders_public_st847291')
+          .insert([orderData])
+          .select()
+          .single()
+
+        if (insertError) throw insertError
+
+        // Add initial status history entry
+        const { error: statusError } = await supabase
+          .from('status_history_public_st847291')
+          .insert([{
+            service_order_id: orderId,
+            status: 'received',
+            notes: `${item.quantity} x ${item.itemType} received and logged into system`
+          }])
+
+        if (statusError) throw statusError
+
+        newOrders.push({
+          ...insertedOrder,
+          statusHistory: [{
+            service_order_id: orderId,
+            status: 'received',
+            notes: `${item.quantity} x ${item.itemType} received and logged into system`,
+            created_at: new Date().toISOString()
+          }]
+        })
       }
 
-      // Insert service orders
-      const { data: insertedOrders, error: orderError } = await supabase
-        .from('service_orders_st847291')
-        .insert(newOrders)
-        .select();
-
-      if (orderError) throw orderError;
-
-      // Insert status history
-      const { error: historyError } = await supabase
-        .from('status_history_st847291')
-        .insert(statusHistoryEntries);
-
-      if (historyError) throw historyError;
-
-      // Refresh the data
-      await fetchServiceOrders();
-
-      return { success: true };
-    } catch (error) {
-      console.error('Error adding service orders:', error);
-      throw error;
+      // Update local state
+      setItems(prev => [...newOrders, ...prev])
+      
+      return { success: true }
+    } catch (err) {
+      console.error('Error adding service orders:', err)
+      setError(err.message || 'Failed to add service order')
+      throw err
     }
-  };
+  }
 
+  // Update an existing service order
   const updateItem = async (id, updates) => {
-    if (!user) throw new Error('User not authenticated');
-
     try {
-      const currentItem = items.find(item => item.id === id) || 
-                         archivedItems.find(item => item.id === id);
-      if (!currentItem) throw new Error('Item not found');
+      setError(null)
+      
+      const updateData = {
+        ...updates,
+        updated_at: new Date().toISOString()
+      }
 
-      // Prepare update data
-      const updateData = { ...updates };
-      delete updateData.statusNotes; // Remove this as it's not a column
+      // Remove statusNotes from the main update data
+      const statusNotes = updateData.statusNotes
+      delete updateData.statusNotes
 
       // Update the service order
-      const { error: updateError } = await supabase
-        .from('service_orders_st847291')
+      const { data: updatedOrder, error: updateError } = await supabase
+        .from('service_orders_public_st847291')
         .update(updateData)
         .eq('id', id)
-        .eq('user_id', user.id);
+        .select()
+        .single()
 
-      if (updateError) throw updateError;
+      if (updateError) throw updateError
 
-      // Add to status history if status changed
-      if (updates.status && updates.status !== currentItem.status) {
-        const { error: historyError } = await supabase
-          .from('status_history_st847291')
+      // Add status history entry if status changed
+      if (updates.status) {
+        const { error: statusError } = await supabase
+          .from('status_history_public_st847291')
           .insert([{
             service_order_id: id,
             status: updates.status,
-            notes: updates.statusNotes || ''
-          }]);
+            notes: statusNotes || ''
+          }])
 
-        if (historyError) throw historyError;
+        if (statusError) throw statusError
       }
 
-      // Refresh the data
-      await fetchServiceOrders();
-    } catch (error) {
-      console.error('Error updating service order:', error);
-      throw error;
+      // Update local state for active items
+      setItems(prev => prev.map(item => {
+        if (item.id === id) {
+          const updated = { ...item, ...updateData }
+          if (updates.status) {
+            updated.statusHistory = [
+              ...(item.statusHistory || []),
+              {
+                service_order_id: id,
+                status: updates.status,
+                notes: statusNotes || '',
+                created_at: new Date().toISOString()
+              }
+            ]
+          }
+          return updated
+        }
+        return item
+      }))
+
+      // Update local state for archived items
+      setArchivedItems(prev => prev.map(item => {
+        if (item.id === id) {
+          const updated = { ...item, ...updateData }
+          if (updates.status) {
+            updated.statusHistory = [
+              ...(item.statusHistory || []),
+              {
+                service_order_id: id,
+                status: updates.status,
+                notes: statusNotes || '',
+                created_at: new Date().toISOString()
+              }
+            ]
+          }
+          return updated
+        }
+        return item
+      }))
+
+    } catch (err) {
+      console.error('Error updating service order:', err)
+      setError(err.message || 'Failed to update service order')
+      throw err
     }
-  };
+  }
 
+  // Archive a service order
   const archiveItem = async (id) => {
-    if (!user) throw new Error('User not authenticated');
-
     try {
-      // Update status to archived and set archived_at timestamp
-      const { error: updateError } = await supabase
-        .from('service_orders_st847291')
-        .update({ 
+      setError(null)
+      
+      const archiveDate = new Date().toISOString()
+      
+      // Update the service order to set archived_at
+      const { data: archivedOrder, error: updateError } = await supabase
+        .from('service_orders_public_st847291')
+        .update({
           status: 'archived',
-          archived_at: new Date().toISOString()
+          archived_at: archiveDate,
+          updated_at: archiveDate
         })
         .eq('id', id)
-        .eq('user_id', user.id);
+        .select(`
+          *,
+          status_history:status_history_public_st847291(*)
+        `)
+        .single()
 
-      if (updateError) throw updateError;
+      if (updateError) throw updateError
 
-      // Add to status history
-      const { error: historyError } = await supabase
-        .from('status_history_st847291')
+      // Add archive entry to status history
+      const { error: statusError } = await supabase
+        .from('status_history_public_st847291')
         .insert([{
           service_order_id: id,
           status: 'archived',
           notes: 'Service order archived'
-        }]);
+        }])
 
-      if (historyError) throw historyError;
+      if (statusError) throw statusError
 
-      // Refresh the data
-      await fetchServiceOrders();
-    } catch (error) {
-      console.error('Error archiving service order:', error);
-      throw error;
+      // Move item from active to archived in local state
+      const itemToArchive = items.find(item => item.id === id)
+      if (itemToArchive) {
+        const archivedItem = {
+          ...archivedOrder,
+          statusHistory: [
+            ...(archivedOrder.status_history || []),
+            {
+              service_order_id: id,
+              status: 'archived',
+              notes: 'Service order archived',
+              created_at: archiveDate
+            }
+          ]
+        }
+
+        setItems(prev => prev.filter(item => item.id !== id))
+        setArchivedItems(prev => [archivedItem, ...prev])
+      }
+
+    } catch (err) {
+      console.error('Error archiving service order:', err)
+      setError(err.message || 'Failed to archive service order')
+      throw err
     }
-  };
+  }
 
+  // Delete an archived service order
   const deleteArchivedItem = async (id) => {
-    if (!user) throw new Error('User not authenticated');
-
     try {
-      // Delete the service order (status history will be deleted via CASCADE)
-      const { error } = await supabase
-        .from('service_orders_st847291')
+      setError(null)
+      
+      // Delete from Supabase (status history will be deleted automatically due to CASCADE)
+      const { error: deleteError } = await supabase
+        .from('service_orders_public_st847291')
         .delete()
         .eq('id', id)
-        .eq('user_id', user.id)
-        .eq('status', 'archived');
 
-      if (error) throw error;
+      if (deleteError) throw deleteError
 
-      // Refresh the data
-      await fetchServiceOrders();
-    } catch (error) {
-      console.error('Error deleting archived order:', error);
-      throw error;
+      // Remove from local state
+      setArchivedItems(prev => prev.filter(item => item.id !== id))
+
+    } catch (err) {
+      console.error('Error deleting archived order:', err)
+      setError(err.message || 'Failed to delete archived service order')
+      throw err
     }
-  };
+  }
+
+  // Refresh data from Supabase
+  const refresh = async () => {
+    await loadServiceOrders()
+  }
 
   return {
     items,
     archivedItems,
     loading,
+    error,
+    isOnline,
     addItem,
     updateItem,
     archiveItem,
     deleteArchivedItem,
-    itemLimit: getItemLimit(),
-    canAddMore: items.length < getItemLimit() && (!isTrialExpired || userProfile?.subscription_tier !== 'free'),
-    refresh: fetchServiceOrders
-  };
-};
+    refresh
+  }
+}

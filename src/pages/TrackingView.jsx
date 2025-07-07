@@ -1,13 +1,22 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Link, useSearchParams } from 'react-router-dom';
+import { useServiceOrders } from '../hooks/useServiceOrders';
 import * as FiIcons from 'react-icons/fi';
 import SafeIcon from '../common/SafeIcon';
 import StatusBadge from '../components/StatusBadge';
 
 const { FiSearch, FiFilter, FiEye, FiArchive, FiX, FiRefreshCw, FiTrash2 } = FiIcons;
 
-const TrackingView = ({ items, onArchiveItem, archivedItems, onDeleteArchivedItem }) => {
+const TrackingView = () => {
+  const { 
+    items, 
+    archivedItems, 
+    loading, 
+    archiveItem, 
+    deleteArchivedItem 
+  } = useServiceOrders();
+  
   const [searchParams, setSearchParams] = useSearchParams();
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
@@ -23,41 +32,53 @@ const TrackingView = ({ items, onArchiveItem, archivedItems, onDeleteArchivedIte
     }
   }, [searchParams]);
 
-  const activeItems = showArchived ? archivedItems : items;
+  if (loading) {
+    return (
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-500 mx-auto mb-4"></div>
+          <p className="text-neutral-600">Loading service orders...</p>
+        </div>
+      </div>
+    );
+  }
 
+  const activeItems = showArchived ? archivedItems : items;
   const filteredItems = activeItems
     .filter(item => {
       const matchesSearch = 
-        item.customerName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        item.itemType.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        item.customer_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        item.item_type.toLowerCase().includes(searchTerm.toLowerCase()) ||
         item.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
         item.id.includes(searchTerm) ||
         (item.company && item.company.toLowerCase().includes(searchTerm.toLowerCase()));
 
       const matchesStatus = statusFilter === 'all' || item.status === statusFilter;
-
       return matchesSearch && matchesStatus;
     })
     .sort((a, b) => {
       switch (sortBy) {
         case 'newest':
-          return new Date(b.createdAt) - new Date(a.createdAt);
+          return new Date(b.created_at) - new Date(a.created_at);
         case 'oldest':
-          return new Date(a.createdAt) - new Date(b.createdAt);
+          return new Date(a.created_at) - new Date(b.created_at);
         case 'customer':
-          // Sort by company first if available, then by customer name
-          const aName = a.company || a.customerName;
-          const bName = b.company || b.customerName;
+          const aName = a.company || a.customer_name;
+          const bName = b.company || b.customer_name;
           return aName.localeCompare(bName);
         default:
           return 0;
       }
     });
 
-  const handleArchive = (itemId, e) => {
+  const handleArchive = async (itemId, e) => {
     e.preventDefault();
     e.stopPropagation();
-    onArchiveItem(itemId);
+    try {
+      await archiveItem(itemId);
+    } catch (error) {
+      console.error('Failed to archive item:', error);
+    }
   };
 
   const handleDeleteConfirm = (itemId, e) => {
@@ -70,10 +91,14 @@ const TrackingView = ({ items, onArchiveItem, archivedItems, onDeleteArchivedIte
     setDeleteConfirmId(null);
   };
 
-  const handleDeleteExecute = () => {
+  const handleDeleteExecute = async () => {
     if (deleteConfirmId) {
-      onDeleteArchivedItem(deleteConfirmId);
-      setDeleteConfirmId(null);
+      try {
+        await deleteArchivedItem(deleteConfirmId);
+        setDeleteConfirmId(null);
+      } catch (error) {
+        console.error('Failed to delete item:', error);
+      }
     }
   };
 
@@ -84,23 +109,17 @@ const TrackingView = ({ items, onArchiveItem, archivedItems, onDeleteArchivedIte
 
   const toggleArchiveView = () => {
     setShowArchived(!showArchived);
-    // Clear filters when switching views
     setStatusFilter('all');
     setSearchTerm('');
     setSearchParams({});
   };
 
-  // Function to get display name for filter
   const getFilterDisplayName = (filter) => {
     switch (filter) {
-      case 'waiting-parts':
-        return 'Waiting on Parts';
-      case 'in-progress':
-        return 'In Progress';
-      case 'ready':
-        return 'Ready for Pickup or Delivery';
-      default:
-        return filter.charAt(0).toUpperCase() + filter.slice(1);
+      case 'waiting-parts': return 'Waiting on Parts';
+      case 'in-progress': return 'In Progress';
+      case 'ready': return 'Ready for Pickup or Delivery';
+      default: return filter.charAt(0).toUpperCase() + filter.slice(1);
     }
   };
 
@@ -119,7 +138,7 @@ const TrackingView = ({ items, onArchiveItem, archivedItems, onDeleteArchivedIte
               </h1>
               <p className="text-neutral-600">
                 {showArchived 
-                  ? `View ${archivedItems.length} archived Service Orders`
+                  ? `View ${archivedItems.length} archived Service Orders` 
                   : 'Search and monitor all active Service Orders'
                 }
               </p>
@@ -138,16 +157,13 @@ const TrackingView = ({ items, onArchiveItem, archivedItems, onDeleteArchivedIte
               </button>
             </div>
           </div>
-          
+
           {statusFilter !== 'all' && !showArchived && (
             <div className="mt-4 flex items-center space-x-2">
               <span className="text-sm text-neutral-600">Filtered by:</span>
               <div className="flex items-center bg-primary-100 text-primary-800 px-3 py-1 rounded-full text-sm font-medium">
                 {getFilterDisplayName(statusFilter)}
-                <button
-                  onClick={clearFilter}
-                  className="ml-2 hover:text-primary-900"
-                >
+                <button onClick={clearFilter} className="ml-2 hover:text-primary-900">
                   <SafeIcon icon={FiX} className="text-sm" />
                 </button>
               </div>
@@ -168,7 +184,7 @@ const TrackingView = ({ items, onArchiveItem, archivedItems, onDeleteArchivedIte
                 className="w-full pl-10 pr-4 py-3 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent bg-white"
               />
             </div>
-            
+
             {!showArchived && (
               <div className="relative">
                 <SafeIcon icon={FiFilter} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-neutral-400" />
@@ -191,7 +207,7 @@ const TrackingView = ({ items, onArchiveItem, archivedItems, onDeleteArchivedIte
                 </select>
               </div>
             )}
-            
+
             <select
               value={sortBy}
               onChange={(e) => setSortBy(e.target.value)}
@@ -257,18 +273,18 @@ const TrackingView = ({ items, onArchiveItem, archivedItems, onDeleteArchivedIte
                           {item.company ? (
                             <>
                               <div className="text-sm font-medium text-neutral-900">{item.company}</div>
-                              <div className="text-sm text-neutral-500">{item.customerName}</div>
+                              <div className="text-sm text-neutral-500">{item.customer_name}</div>
                             </>
                           ) : (
-                            <div className="text-sm font-medium text-neutral-900">{item.customerName}</div>
+                            <div className="text-sm font-medium text-neutral-900">{item.customer_name}</div>
                           )}
-                          <div className="text-sm text-neutral-500">{item.customerPhone}</div>
+                          <div className="text-sm text-neutral-500">{item.customer_phone}</div>
                         </div>
                       </td>
                       <td className="px-6 py-4">
                         <div>
                           <div className="text-sm font-medium text-neutral-900 capitalize">
-                            {item.quantity}x {item.itemType}
+                            {item.quantity}x {item.item_type}
                           </div>
                           <div className="text-sm text-neutral-500 line-clamp-2">
                             {item.description}
@@ -279,7 +295,7 @@ const TrackingView = ({ items, onArchiveItem, archivedItems, onDeleteArchivedIte
                         <StatusBadge status={item.status} />
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-neutral-500">
-                        {new Date(showArchived ? item.archivedAt : item.createdAt).toLocaleDateString()}
+                        {new Date(showArchived ? item.archived_at : item.created_at).toLocaleDateString()}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="flex items-center space-x-2">
@@ -345,14 +361,11 @@ const TrackingView = ({ items, onArchiveItem, archivedItems, onDeleteArchivedIte
                 </p>
               </div>
             </div>
-            
             <div className="mb-6">
               <p className="text-neutral-700">
-                Are you sure you want to permanently delete this archived service order? 
-                This action cannot be undone and all data will be lost.
+                Are you sure you want to permanently delete this archived service order? This action cannot be undone and all data will be lost.
               </p>
             </div>
-            
             <div className="flex justify-end space-x-3">
               <button
                 onClick={handleDeleteCancel}

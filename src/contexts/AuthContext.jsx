@@ -15,49 +15,80 @@ export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [userProfile, setUserProfile] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
     console.log('AuthProvider: Starting authentication check...');
     
-    // Get initial session
-    supabase.auth.getSession().then(({ data: { session }, error }) => {
-      console.log('AuthProvider: Initial session check:', { session: !!session, error });
-      
-      if (error) {
-        console.error('AuthProvider: Session error:', error);
-        setLoading(false);
-        return;
+    // Flag to track component mount state
+    let isMounted = true;
+    
+    const initializeAuth = async () => {
+      try {
+        // Get initial session
+        const { data, error: sessionError } = await supabase.auth.getSession();
+        
+        if (sessionError) {
+          console.error('AuthProvider: Session error:', sessionError);
+          if (isMounted) {
+            setError(sessionError.message);
+            setLoading(false);
+          }
+          return;
+        }
+        
+        const session = data.session;
+        
+        if (isMounted) {
+          setUser(session?.user ?? null);
+        }
+        
+        if (session?.user) {
+          console.log('AuthProvider: User found, fetching profile...');
+          if (isMounted) {
+            await fetchUserProfile(session.user.id);
+          }
+        } else {
+          console.log('AuthProvider: No user session found');
+          if (isMounted) {
+            setLoading(false);
+          }
+        }
+      } catch (err) {
+        console.error('AuthProvider: Initialization error:', err);
+        if (isMounted) {
+          setError(err.message);
+          setLoading(false);
+        }
       }
-      
-      setUser(session?.user ?? null);
-      if (session?.user) {
-        console.log('AuthProvider: User found, fetching profile...');
-        fetchUserProfile(session.user.id);
-      } else {
-        console.log('AuthProvider: No user session found');
-        setLoading(false);
-      }
-    });
-
+    };
+    
+    // Initialize authentication
+    initializeAuth();
+    
     // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
         console.log('AuthProvider: Auth state changed:', { event, session: !!session });
         
+        if (!isMounted) return;
+        
         setUser(session?.user ?? null);
+        
         if (session?.user) {
           console.log('AuthProvider: User authenticated, fetching profile...');
           await fetchUserProfile(session.user.id);
         } else {
           console.log('AuthProvider: User signed out');
           setUserProfile(null);
+          setLoading(false);
         }
-        setLoading(false);
       }
     );
 
     return () => {
       console.log('AuthProvider: Cleaning up auth subscription');
+      isMounted = false;
       subscription.unsubscribe();
     };
   }, []);
@@ -77,8 +108,11 @@ export const AuthProvider = ({ children }) => {
         if (error.code === 'PGRST116') {
           console.log('fetchUserProfile: No profile found, user needs to complete setup');
           // Profile doesn't exist yet, this is okay for new users
+          setLoading(false);
+          return;
         } else {
           console.error('fetchUserProfile: Database error:', error);
+          setError(error.message);
         }
       } else if (data) {
         console.log('fetchUserProfile: Profile found:', data);
@@ -86,6 +120,7 @@ export const AuthProvider = ({ children }) => {
       }
     } catch (error) {
       console.error('fetchUserProfile: Unexpected error:', error);
+      setError(error.message);
     } finally {
       setLoading(false);
     }
@@ -175,6 +210,7 @@ export const AuthProvider = ({ children }) => {
     try {
       console.log('signIn: Starting signin process for:', email);
       setLoading(true);
+      setError(null);
       
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
@@ -192,6 +228,7 @@ export const AuthProvider = ({ children }) => {
       return { data, error: null };
     } catch (error) {
       console.error('signIn: Signin failed:', error);
+      setError(error.message);
       return { data: null, error };
     } finally {
       setLoading(false);
@@ -201,6 +238,7 @@ export const AuthProvider = ({ children }) => {
   const signOut = async () => {
     try {
       console.log('signOut: Starting signout process');
+      setLoading(true);
       
       const { error } = await supabase.auth.signOut();
       if (error) {
@@ -214,7 +252,10 @@ export const AuthProvider = ({ children }) => {
       return { error: null };
     } catch (error) {
       console.error('signOut: Signout failed:', error);
+      setError(error.message);
       return { error };
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -238,6 +279,7 @@ export const AuthProvider = ({ children }) => {
       return { data, error: null };
     } catch (error) {
       console.error('updateSubscription: Error updating subscription:', error);
+      setError(error.message);
       return { data: null, error };
     }
   };
@@ -252,6 +294,7 @@ export const AuthProvider = ({ children }) => {
     user,
     userProfile,
     loading,
+    error,
     signUp,
     signIn,
     signOut,

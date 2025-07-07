@@ -1,13 +1,16 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
+import { useServiceOrders } from '../hooks/useServiceOrders';
 import * as FiIcons from 'react-icons/fi';
 import SafeIcon from '../common/SafeIcon';
 
 const { FiUser, FiPhone, FiMail, FiPackage, FiFileText, FiCalendar, FiSave, FiPlus, FiMinus, FiHome } = FiIcons;
 
-const ItemIntake = ({ onAddItem }) => {
+const ItemIntake = () => {
   const navigate = useNavigate();
+  const { addItem, loading: serviceLoading } = useServiceOrders();
+  
   const [formData, setFormData] = useState({
     customerName: '',
     customerPhone: '',
@@ -19,7 +22,9 @@ const ItemIntake = ({ onAddItem }) => {
     urgency: 'normal',
     expectedCompletion: ''
   });
+  
   const [errors, setErrors] = useState({});
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -27,6 +32,7 @@ const ItemIntake = ({ onAddItem }) => {
       ...prev,
       [name]: value
     }));
+    
     if (errors[name]) {
       setErrors(prev => ({
         ...prev,
@@ -53,7 +59,7 @@ const ItemIntake = ({ onAddItem }) => {
     }
   };
 
-  const addItem = () => {
+  const addItemToForm = () => {
     setFormData(prev => ({
       ...prev,
       items: [
@@ -96,16 +102,35 @@ const ItemIntake = ({ onAddItem }) => {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
+    
     if (validateForm()) {
-      onAddItem(formData);
-      navigate('/dashboard');
+      setIsSubmitting(true);
+      try {
+        await addItem(formData);
+        navigate('/dashboard');
+      } catch (error) {
+        setErrors({ general: error.message || 'Failed to create service orders. Please try again.' });
+      } finally {
+        setIsSubmitting(false);
+      }
     }
   };
 
   const inputClasses = "w-full px-4 py-3 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all duration-200 bg-white";
-  const errorClasses = "border-primary-300 focus:ring-primary-500";
+  const errorClasses = "border-red-300 focus:ring-red-500";
+
+  if (serviceLoading) {
+    return (
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-500 mx-auto mb-4"></div>
+          <p className="text-neutral-600">Loading...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -120,6 +145,13 @@ const ItemIntake = ({ onAddItem }) => {
         </div>
 
         <form onSubmit={handleSubmit} className="bg-white rounded-xl shadow-lg p-8">
+          {/* General Error */}
+          {errors.general && (
+            <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
+              <p className="text-red-700">{errors.general}</p>
+            </div>
+          )}
+
           {/* Customer Information */}
           <div className="mb-8">
             <h2 className="text-xl font-semibold text-neutral-900 border-b border-neutral-200 pb-2 mb-6">Customer Information</h2>
@@ -139,7 +171,7 @@ const ItemIntake = ({ onAddItem }) => {
                   placeholder="Enter customer name"
                 />
                 {errors.customerName && (
-                  <p className="mt-1 text-sm text-primary-600">{errors.customerName}</p>
+                  <p className="mt-1 text-sm text-red-600">{errors.customerName}</p>
                 )}
               </div>
 
@@ -174,7 +206,7 @@ const ItemIntake = ({ onAddItem }) => {
                   placeholder="Enter phone number"
                 />
                 {errors.customerPhone && (
-                  <p className="mt-1 text-sm text-primary-600">{errors.customerPhone}</p>
+                  <p className="mt-1 text-sm text-red-600">{errors.customerPhone}</p>
                 )}
               </div>
 
@@ -201,7 +233,7 @@ const ItemIntake = ({ onAddItem }) => {
               <h2 className="text-xl font-semibold text-neutral-900 border-b border-neutral-200 pb-2">Items Information</h2>
               <button
                 type="button"
-                onClick={addItem}
+                onClick={addItemToForm}
                 className="flex items-center px-4 py-2 bg-primary-500 text-white rounded-lg hover:bg-primary-600 transition-colors duration-200 text-sm font-medium"
               >
                 <SafeIcon icon={FiPlus} className="mr-2" />
@@ -246,7 +278,7 @@ const ItemIntake = ({ onAddItem }) => {
                         placeholder="Enter item type"
                       />
                       {errors[`items.${index}.itemType`] && (
-                        <p className="mt-1 text-sm text-primary-600">{errors[`items.${index}.itemType`]}</p>
+                        <p className="mt-1 text-sm text-red-600">{errors[`items.${index}.itemType`]}</p>
                       )}
                     </div>
 
@@ -263,7 +295,7 @@ const ItemIntake = ({ onAddItem }) => {
                         placeholder="1"
                       />
                       {errors[`items.${index}.quantity`] && (
-                        <p className="mt-1 text-sm text-primary-600">{errors[`items.${index}.quantity`]}</p>
+                        <p className="mt-1 text-sm text-red-600">{errors[`items.${index}.quantity`]}</p>
                       )}
                     </div>
                   </div>
@@ -281,7 +313,7 @@ const ItemIntake = ({ onAddItem }) => {
                       placeholder="Describe the issue or service needed..."
                     />
                     {errors[`items.${index}.description`] && (
-                      <p className="mt-1 text-sm text-primary-600">{errors[`items.${index}.description`]}</p>
+                      <p className="mt-1 text-sm text-red-600">{errors[`items.${index}.description`]}</p>
                     )}
                   </div>
                 </motion.div>
@@ -325,12 +357,13 @@ const ItemIntake = ({ onAddItem }) => {
           <div className="flex justify-end">
             <motion.button
               type="submit"
-              className="bg-primary-500 text-white px-8 py-3 rounded-lg font-medium hover:bg-primary-600 transition-colors duration-200 flex items-center space-x-2 shadow-lg"
+              disabled={isSubmitting}
+              className="bg-primary-500 text-white px-8 py-3 rounded-lg font-medium hover:bg-primary-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200 flex items-center space-x-2 shadow-lg"
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
             >
               <SafeIcon icon={FiSave} />
-              <span>Register Service Order</span>
+              <span>{isSubmitting ? 'Creating...' : 'Register Service Order'}</span>
             </motion.button>
           </div>
         </form>

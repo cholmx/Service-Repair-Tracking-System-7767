@@ -4,7 +4,7 @@ import { motion } from 'framer-motion';
 import * as FiIcons from 'react-icons/fi';
 import SafeIcon from '../common/SafeIcon';
 
-const { FiTool, FiHome, FiPlus, FiSearch, FiMenu, FiX } = FiIcons;
+const { FiTool, FiHome, FiPlus, FiSearch, FiMenu, FiX, FiSettings } = FiIcons;
 
 const Navbar = () => {
   const location = useLocation();
@@ -13,7 +13,8 @@ const Navbar = () => {
   const navItems = [
     { path: '/dashboard', label: 'Dashboard', icon: FiHome },
     { path: '/intake', label: 'New Service Order', icon: FiPlus },
-    { path: '/tracking', label: 'Track Service Orders', icon: FiSearch }
+    { path: '/tracking', label: 'Track Service Orders', icon: FiSearch },
+    { path: '/settings', label: 'Settings', icon: FiSettings }
   ];
 
   const toggleMobileMenu = () => {
@@ -38,11 +39,7 @@ const Navbar = () => {
                   to={item.path}
                   className="relative px-3 py-2 rounded-lg transition-colors duration-200"
                 >
-                  <div
-                    className={`flex items-center space-x-2 ${
-                      location.pathname === item.path ? 'text-primary-500' : 'text-neutral-600 hover:text-primary-500'
-                    }`}
-                  >
+                  <div className={`flex items-center space-x-2 ${location.pathname === item.path ? 'text-primary-500' : 'text-neutral-600 hover:text-primary-500'}`}>
                     <SafeIcon icon={item.icon} className="text-lg" />
                     <span className="font-medium">{item.label}</span>
                   </div>

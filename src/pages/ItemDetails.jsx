@@ -13,6 +13,7 @@ const ItemDetails = ({ onPrintReceipt }) => {
   const { items, archivedItems, updateItem, loading } = useServiceOrders();
   const [isEditing, setIsEditing] = useState(false);
   const [editData, setEditData] = useState({});
+  const [isSaving, setIsSaving] = useState(false);
 
   // Find item in both active and archived items
   const allItems = [...items, ...archivedItems];
@@ -56,6 +57,8 @@ const ItemDetails = ({ onPrintReceipt }) => {
 
   const handleSave = async () => {
     try {
+      setIsSaving(true);
+      
       // Calculate totals
       const partsTotal = editData.parts.reduce((sum, part) => sum + (part.quantity * part.price), 0);
       const laborTotal = editData.labor.reduce((sum, labor) => sum + (labor.hours * labor.rate), 0);
@@ -64,18 +67,33 @@ const ItemDetails = ({ onPrintReceipt }) => {
       const total = subtotal + tax;
 
       const updateData = {
-        ...editData,
+        status: editData.status,
+        expected_completion: editData.expected_completion || null,
+        parts: editData.parts,
+        labor: editData.labor,
+        tax_rate: editData.tax_rate,
         parts_total: partsTotal,
         labor_total: laborTotal,
         subtotal,
         tax,
-        total
+        total,
+        statusNotes: editData.statusNotes || ''
       };
+
+      console.log('Saving update data:', updateData);
 
       await updateItem(item.id, updateData);
       setIsEditing(false);
+      setEditData({});
+      
+      // Show success message
+      console.log('Service order updated successfully!');
+      
     } catch (error) {
       console.error('Failed to update item:', error);
+      alert('Failed to update service order. Please try again.');
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -161,8 +179,8 @@ const ItemDetails = ({ onPrintReceipt }) => {
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
           <div className="flex items-center space-x-4">
-            <Link
-              to="/tracking"
+            <Link 
+              to="/tracking" 
               className="flex items-center text-neutral-600 hover:text-neutral-900 transition-colors duration-200"
             >
               <SafeIcon icon={FiArrowLeft} className="mr-2" />
@@ -170,7 +188,7 @@ const ItemDetails = ({ onPrintReceipt }) => {
             </Link>
             <div className="h-6 w-px bg-neutral-300" />
             <h1 className="text-2xl font-bold text-neutral-900">
-              Service Order #{item.id.slice(-6)}
+              Service Order #{item.id}
             </h1>
           </div>
           <div className="flex items-center space-x-3">
@@ -195,14 +213,16 @@ const ItemDetails = ({ onPrintReceipt }) => {
               <div className="flex space-x-2">
                 <button
                   onClick={handleSave}
-                  className="flex items-center px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors duration-200 shadow-lg"
+                  disabled={isSaving}
+                  className="flex items-center px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200 shadow-lg"
                 >
                   <SafeIcon icon={FiSave} className="mr-2" />
-                  Save
+                  {isSaving ? 'Saving...' : 'Save'}
                 </button>
                 <button
                   onClick={handleCancel}
-                  className="flex items-center px-4 py-2 bg-neutral-600 text-white rounded-lg hover:bg-neutral-700 transition-colors duration-200 shadow-lg"
+                  disabled={isSaving}
+                  className="flex items-center px-4 py-2 bg-neutral-600 text-white rounded-lg hover:bg-neutral-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200 shadow-lg"
                 >
                   <SafeIcon icon={FiX} className="mr-2" />
                   Cancel
@@ -241,7 +261,14 @@ const ItemDetails = ({ onPrintReceipt }) => {
                 <SafeIcon icon={FiUser} className="text-primary-500 mr-3" />
                 <div>
                   <span className="text-sm text-neutral-500">Name:</span>
-                  <p className="font-medium">{item.customer_name}</p>
+                  {item.company ? (
+                    <div>
+                      <div className="font-medium text-neutral-900">{item.company}</div>
+                      <div className="text-neutral-700">{item.customer_name}</div>
+                    </div>
+                  ) : (
+                    <div className="font-medium text-neutral-900">{item.customer_name}</div>
+                  )}
                 </div>
               </div>
               {item.company && (
@@ -308,15 +335,11 @@ const ItemDetails = ({ onPrintReceipt }) => {
                 />
               ) : (
                 <p className="mt-1 font-medium">
-                  {item.expected_completion 
-                    ? new Date(item.expected_completion).toLocaleDateString() 
-                    : 'Not set'
-                  }
+                  {item.expected_completion ? new Date(item.expected_completion).toLocaleDateString() : 'Not set'}
                 </p>
               )}
             </div>
           </div>
-
           {isEditing && (
             <div className="mt-6">
               <label className="block text-sm text-neutral-500 mb-2">Status Update Notes:</label>
@@ -345,7 +368,6 @@ const ItemDetails = ({ onPrintReceipt }) => {
               </button>
             )}
           </div>
-
           {isEditing ? (
             <div className="space-y-4">
               {editData.parts.map((part, index) => (
@@ -433,7 +455,6 @@ const ItemDetails = ({ onPrintReceipt }) => {
               </button>
             )}
           </div>
-
           {isEditing ? (
             <div className="space-y-4">
               {editData.labor.map((laborItem, index) => (
@@ -480,7 +501,6 @@ const ItemDetails = ({ onPrintReceipt }) => {
                   </div>
                 </div>
               ))}
-
               <div className="mt-6 p-4 bg-neutral-50 rounded-lg">
                 <label className="block text-sm text-neutral-500 mb-1">Tax Rate (%)</label>
                 <input

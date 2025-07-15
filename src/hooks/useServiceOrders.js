@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
+import orderIdGenerator from '../utils/orderIdGenerator'
 
 export const useServiceOrders = () => {
   const [items, setItems] = useState([])
@@ -42,7 +43,10 @@ export const useServiceOrders = () => {
         .is('archived_at', null)
         .order('created_at', { ascending: false })
 
-      if (activeError) throw activeError
+      if (activeError) {
+        console.error("Active orders error:", activeError);
+        throw activeError;
+      }
 
       // Load archived service orders
       const { data: archivedOrders, error: archivedError } = await supabase
@@ -54,7 +58,10 @@ export const useServiceOrders = () => {
         .not('archived_at', 'is', null)
         .order('archived_at', { ascending: false })
 
-      if (archivedError) throw archivedError
+      if (archivedError) {
+        console.error("Archived orders error:", archivedError);
+        throw archivedError;
+      }
 
       // Transform data to match expected format
       const transformOrder = (order) => ({
@@ -62,9 +69,8 @@ export const useServiceOrders = () => {
         statusHistory: order.status_history || []
       })
 
-      setItems(activeOrders.map(transformOrder))
-      setArchivedItems(archivedOrders.map(transformOrder))
-
+      setItems(activeOrders ? activeOrders.map(transformOrder) : [])
+      setArchivedItems(archivedOrders ? archivedOrders.map(transformOrder) : [])
     } catch (err) {
       console.error('Error loading service orders:', err)
       setError(err.message || 'Failed to load service orders')
@@ -78,11 +84,12 @@ export const useServiceOrders = () => {
     try {
       setError(null)
       const newOrders = []
-      
+
       // Create service orders for each item
       for (const item of formData.items) {
-        const orderId = crypto.randomUUID()
-        
+        // Generate unique order ID using our generator
+        const orderId = orderIdGenerator.generateOrderId()
+
         const orderData = {
           id: orderId,
           customer_name: formData.customerName,
@@ -112,18 +119,27 @@ export const useServiceOrders = () => {
           .select()
           .single()
 
-        if (insertError) throw insertError
+        if (insertError) {
+          console.error('Error inserting order:', insertError);
+          throw insertError;
+        }
 
         // Add initial status history entry
+        const statusHistoryEntry = {
+          service_order_id: orderId,
+          status: 'received',
+          notes: `${item.quantity} x ${item.itemType} received and logged into system`
+        };
+        console.log('Creating status history entry:', statusHistoryEntry);
+
         const { error: statusError } = await supabase
           .from('status_history_public_st847291')
-          .insert([{
-            service_order_id: orderId,
-            status: 'received',
-            notes: `${item.quantity} x ${item.itemType} received and logged into system`
-          }])
+          .insert([statusHistoryEntry])
 
-        if (statusError) throw statusError
+        if (statusError) {
+          console.error('Error inserting status history:', statusError);
+          throw statusError;
+        }
 
         newOrders.push({
           ...insertedOrder,
@@ -138,7 +154,7 @@ export const useServiceOrders = () => {
 
       // Update local state
       setItems(prev => [...newOrders, ...prev])
-      
+
       return { success: true }
     } catch (err) {
       console.error('Error adding service orders:', err)
@@ -151,7 +167,7 @@ export const useServiceOrders = () => {
   const updateItem = async (id, updates) => {
     try {
       setError(null)
-      
+
       const updateData = {
         ...updates,
         updated_at: new Date().toISOString()
@@ -169,19 +185,28 @@ export const useServiceOrders = () => {
         .select()
         .single()
 
-      if (updateError) throw updateError
+      if (updateError) {
+        console.error('Error updating order:', updateError);
+        throw updateError;
+      }
 
       // Add status history entry if status changed
       if (updates.status) {
+        const statusHistoryEntry = {
+          service_order_id: id,
+          status: updates.status,
+          notes: statusNotes || ''
+        };
+        console.log('Adding status history entry:', statusHistoryEntry);
+
         const { error: statusError } = await supabase
           .from('status_history_public_st847291')
-          .insert([{
-            service_order_id: id,
-            status: updates.status,
-            notes: statusNotes || ''
-          }])
+          .insert([statusHistoryEntry])
 
-        if (statusError) throw statusError
+        if (statusError) {
+          console.error('Error inserting status history:', statusError);
+          throw statusError;
+        }
       }
 
       // Update local state for active items
@@ -223,7 +248,6 @@ export const useServiceOrders = () => {
         }
         return item
       }))
-
     } catch (err) {
       console.error('Error updating service order:', err)
       setError(err.message || 'Failed to update service order')
@@ -235,9 +259,8 @@ export const useServiceOrders = () => {
   const archiveItem = async (id) => {
     try {
       setError(null)
-      
       const archiveDate = new Date().toISOString()
-      
+
       // Update the service order to set archived_at
       const { data: archivedOrder, error: updateError } = await supabase
         .from('service_orders_public_st847291')
@@ -253,18 +276,27 @@ export const useServiceOrders = () => {
         `)
         .single()
 
-      if (updateError) throw updateError
+      if (updateError) {
+        console.error('Error archiving order:', updateError);
+        throw updateError;
+      }
 
       // Add archive entry to status history
+      const statusHistoryEntry = {
+        service_order_id: id,
+        status: 'archived',
+        notes: 'Service order archived'
+      };
+      console.log('Adding archive status entry:', statusHistoryEntry);
+
       const { error: statusError } = await supabase
         .from('status_history_public_st847291')
-        .insert([{
-          service_order_id: id,
-          status: 'archived',
-          notes: 'Service order archived'
-        }])
+        .insert([statusHistoryEntry])
 
-      if (statusError) throw statusError
+      if (statusError) {
+        console.error('Error inserting archive status:', statusError);
+        throw statusError;
+      }
 
       // Move item from active to archived in local state
       const itemToArchive = items.find(item => item.id === id)
@@ -285,7 +317,6 @@ export const useServiceOrders = () => {
         setItems(prev => prev.filter(item => item.id !== id))
         setArchivedItems(prev => [archivedItem, ...prev])
       }
-
     } catch (err) {
       console.error('Error archiving service order:', err)
       setError(err.message || 'Failed to archive service order')
@@ -297,18 +328,20 @@ export const useServiceOrders = () => {
   const deleteArchivedItem = async (id) => {
     try {
       setError(null)
-      
+
       // Delete from Supabase (status history will be deleted automatically due to CASCADE)
       const { error: deleteError } = await supabase
         .from('service_orders_public_st847291')
         .delete()
         .eq('id', id)
 
-      if (deleteError) throw deleteError
+      if (deleteError) {
+        console.error('Error deleting archived order:', deleteError);
+        throw deleteError;
+      }
 
       // Remove from local state
       setArchivedItems(prev => prev.filter(item => item.id !== id))
-
     } catch (err) {
       console.error('Error deleting archived order:', err)
       setError(err.message || 'Failed to delete archived service order')
@@ -321,6 +354,11 @@ export const useServiceOrders = () => {
     await loadServiceOrders()
   }
 
+  // Get order ID generator stats (for debugging/admin purposes)
+  const getOrderIdStats = () => {
+    return orderIdGenerator.getStats()
+  }
+
   return {
     items,
     archivedItems,
@@ -331,6 +369,7 @@ export const useServiceOrders = () => {
     updateItem,
     archiveItem,
     deleteArchivedItem,
-    refresh
+    refresh,
+    getOrderIdStats
   }
 }

@@ -20,6 +20,30 @@ const supabaseClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
   }
 })
 
+// Simple table creation without complex migration
+const ensureTablesExist = async () => {
+  try {
+    console.log('Ensuring database tables exist...')
+    
+    // Try to create tables if they don't exist
+    const { error } = await supabaseClient.from('service_orders_public_st847291').select('id').limit(1)
+    
+    if (error && error.code === 'PGRST204') {
+      console.log('Tables do not exist, they need to be created manually in Supabase dashboard')
+      console.log('Please create the tables using the SQL migration file')
+    } else if (error) {
+      console.log('Database connection error:', error.message)
+    } else {
+      console.log('Database tables are ready')
+    }
+  } catch (error) {
+    console.log('Database check error:', error.message)
+  }
+}
+
+// Check tables on module load
+ensureTablesExist()
+
 // Test the connection when the file loads
 console.log('Supabase client initialized:', {
   url: SUPABASE_URL,

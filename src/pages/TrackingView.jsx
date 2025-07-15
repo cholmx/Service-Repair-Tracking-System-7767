@@ -9,14 +9,7 @@ import StatusBadge from '../components/StatusBadge';
 const { FiSearch, FiFilter, FiEye, FiArchive, FiX, FiRefreshCw, FiTrash2 } = FiIcons;
 
 const TrackingView = () => {
-  const { 
-    items, 
-    archivedItems, 
-    loading, 
-    archiveItem, 
-    deleteArchivedItem 
-  } = useServiceOrders();
-  
+  const { items, archivedItems, loading, archiveItem, deleteArchivedItem } = useServiceOrders();
   const [searchParams, setSearchParams] = useSearchParams();
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
@@ -44,16 +37,17 @@ const TrackingView = () => {
   }
 
   const activeItems = showArchived ? archivedItems : items;
+
   const filteredItems = activeItems
     .filter(item => {
-      const matchesSearch = 
-        item.customer_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        item.item_type.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        item.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        item.id.includes(searchTerm) ||
-        (item.company && item.company.toLowerCase().includes(searchTerm.toLowerCase()));
-
+      const matchesSearch = item.customer_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                           item.item_type.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                           item.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                           item.id.includes(searchTerm) ||
+                           (item.company && item.company.toLowerCase().includes(searchTerm.toLowerCase()));
+      
       const matchesStatus = statusFilter === 'all' || item.status === statusFilter;
+      
       return matchesSearch && matchesStatus;
     })
     .sort((a, b) => {
@@ -116,10 +110,14 @@ const TrackingView = () => {
 
   const getFilterDisplayName = (filter) => {
     switch (filter) {
-      case 'waiting-parts': return 'Waiting on Parts';
-      case 'in-progress': return 'In Progress';
-      case 'ready': return 'Ready for Pickup or Delivery';
-      default: return filter.charAt(0).toUpperCase() + filter.slice(1);
+      case 'waiting-parts':
+        return 'Waiting on Parts';
+      case 'in-progress':
+        return 'In Progress';
+      case 'ready':
+        return 'Ready for Pickup or Delivery';
+      default:
+        return filter.charAt(0).toUpperCase() + filter.slice(1);
     }
   };
 
@@ -138,7 +136,7 @@ const TrackingView = () => {
               </h1>
               <p className="text-neutral-600">
                 {showArchived 
-                  ? `View ${archivedItems.length} archived Service Orders` 
+                  ? `View ${archivedItems.length} archived Service Orders`
                   : 'Search and monitor all active Service Orders'
                 }
               </p>
@@ -266,7 +264,7 @@ const TrackingView = () => {
                       className="hover:bg-neutral-50 transition-colors duration-200"
                     >
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <span className="text-sm font-mono text-neutral-900">#{item.id.slice(-6)}</span>
+                        <span className="text-sm font-mono text-neutral-900">#{item.id}</span>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div>
@@ -357,15 +355,17 @@ const TrackingView = () => {
                   Delete Archived Service Order
                 </h3>
                 <p className="text-sm text-neutral-500">
-                  Service Order #{deleteConfirmId.slice(-6)}
+                  Service Order #{deleteConfirmId}
                 </p>
               </div>
             </div>
+            
             <div className="mb-6">
               <p className="text-neutral-700">
                 Are you sure you want to permanently delete this archived service order? This action cannot be undone and all data will be lost.
               </p>
             </div>
+            
             <div className="flex justify-end space-x-3">
               <button
                 onClick={handleDeleteCancel}

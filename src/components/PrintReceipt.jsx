@@ -14,16 +14,10 @@ const PrintReceipt = ({ item, onClose }) => {
       <!DOCTYPE html>
       <html>
         <head>
-          <title>Service Receipt - #${item.id.slice(-6)}</title>
+          <title>Service Receipt - #${item.id}</title>
           <style>
             * { margin: 0; padding: 0; box-sizing: border-box; }
-            body { 
-              font-family: Arial, sans-serif; 
-              font-size: 10pt; 
-              line-height: 1.2; 
-              color: #000;
-              background: white;
-            }
+            body { font-family: Arial, sans-serif; font-size: 10pt; line-height: 1.2; color: #000; background: white; }
             .print-receipt { padding: 20px; max-width: 600px; margin: 0 auto; }
             h1 { font-size: 14pt; margin-bottom: 4px; text-align: center; }
             h2 { font-size: 11pt; margin-bottom: 8px; border-bottom: 1px solid #000; padding-bottom: 2px; }
@@ -63,11 +57,7 @@ const PrintReceipt = ({ item, onClose }) => {
             .text-green-700 { color: #15803d; }
             .text-blue-700 { color: #1d4ed8; }
             .leading-tight { line-height: 1.1; }
-            .truncate { 
-              overflow: hidden; 
-              text-overflow: ellipsis; 
-              white-space: nowrap; 
-            }
+            .truncate { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
             .pr-2 { padding-right: 4px; }
             .flex-1 { flex: 1; }
             .bg-blue-50 { background-color: #eff6ff; }
@@ -151,7 +141,7 @@ const PrintReceipt = ({ item, onClose }) => {
             <div className="mt-2 pt-2 border-t border-neutral-200">
               <div className="flex justify-between text-xs print:text-xs text-neutral-500">
                 <span>Date: {currentDate}</span>
-                <span>Receipt ID: #{item.id.slice(-6)}</span>
+                <span>Receipt ID: #{item.id}</span>
               </div>
             </div>
           </div>
@@ -168,17 +158,17 @@ const PrintReceipt = ({ item, onClose }) => {
                   {item.company ? (
                     <div>
                       <div className="font-medium text-neutral-900">{item.company}</div>
-                      <div className="text-neutral-700">{item.customerName}</div>
+                      <div className="text-neutral-700">{item.customer_name}</div>
                     </div>
                   ) : (
-                    <div className="font-medium text-neutral-900">{item.customerName}</div>
+                    <div className="font-medium text-neutral-900">{item.customer_name}</div>
                   )}
                 </div>
                 <div>
                   <span className="text-neutral-500">Contact:</span>
-                  <div className="text-neutral-700">{item.customerPhone}</div>
-                  {item.customerEmail && (
-                    <div className="text-neutral-700">{item.customerEmail}</div>
+                  <div className="text-neutral-700">{item.customer_phone}</div>
+                  {item.customer_email && (
+                    <div className="text-neutral-700">{item.customer_email}</div>
                   )}
                 </div>
               </div>
@@ -193,7 +183,7 @@ const PrintReceipt = ({ item, onClose }) => {
                 <div>
                   <span className="text-neutral-500">Service Order:</span>
                   <div className="font-medium text-neutral-900 capitalize">
-                    {item.quantity}x {item.itemType}
+                    {item.quantity}x {item.item_type}
                   </div>
                 </div>
                 <div>
@@ -225,6 +215,7 @@ const PrintReceipt = ({ item, onClose }) => {
             <h2 className="text-sm font-semibold text-neutral-900 mb-2 border-b border-neutral-200 pb-1">
               Service Details
             </h2>
+            
             {/* Parts and Labor in two columns */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 print:gap-3">
               {/* Parts Section */}
@@ -247,7 +238,7 @@ const PrintReceipt = ({ item, onClose }) => {
                     <div className="border-t pt-1 mt-1">
                       <div className="flex justify-between text-xs font-medium">
                         <span>Parts Total:</span>
-                        <span>${item.partsTotal?.toFixed(2) || '0.00'}</span>
+                        <span>${item.parts_total?.toFixed(2) || '0.00'}</span>
                       </div>
                     </div>
                   </div>
@@ -276,7 +267,7 @@ const PrintReceipt = ({ item, onClose }) => {
                     <div className="border-t pt-1 mt-1">
                       <div className="flex justify-between text-xs font-medium">
                         <span>Labor Total:</span>
-                        <span>${item.laborTotal?.toFixed(2) || '0.00'}</span>
+                        <span>${item.labor_total?.toFixed(2) || '0.00'}</span>
                       </div>
                     </div>
                   </div>
@@ -292,15 +283,15 @@ const PrintReceipt = ({ item, onClose }) => {
                 <div className="space-y-1">
                   <div className="flex justify-between">
                     <span className="text-neutral-700">Parts:</span>
-                    <span>${item.partsTotal?.toFixed(2) || '0.00'}</span>
+                    <span>${item.parts_total?.toFixed(2) || '0.00'}</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-neutral-700">Labor:</span>
-                    <span>${item.laborTotal?.toFixed(2) || '0.00'}</span>
+                    <span>${item.labor_total?.toFixed(2) || '0.00'}</span>
                   </div>
                   {item.tax > 0 && (
                     <div className="flex justify-between">
-                      <span className="text-neutral-700">Tax ({item.taxRate}%):</span>
+                      <span className="text-neutral-700">Tax ({item.tax_rate}%):</span>
                       <span>${item.tax?.toFixed(2) || '0.00'}</span>
                     </div>
                   )}

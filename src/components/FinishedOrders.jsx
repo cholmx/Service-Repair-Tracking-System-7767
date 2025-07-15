@@ -26,6 +26,7 @@ const FinishedOrders = ({ items, onPrintReceipt }) => {
           </span>
         </div>
       </div>
+
       {finishedItems.length === 0 ? (
         <div className="text-center py-8 text-neutral-500">
           <SafeIcon icon={FiPrinter} className="mx-auto text-4xl mb-2 text-neutral-300" />
@@ -45,26 +46,30 @@ const FinishedOrders = ({ items, onPrintReceipt }) => {
               <div className="flex-1">
                 <div className="flex items-center space-x-3 mb-2">
                   <span className="text-sm font-mono text-neutral-500">
-                    #{item.id.slice(-6)}
+                    #{item.id}
                   </span>
                   <StatusBadge status={item.status} />
                 </div>
+                
                 {item.company ? (
                   <div>
                     <p className="font-medium text-neutral-900">{item.company}</p>
-                    <p className="text-sm text-neutral-600">{item.customerName}</p>
+                    <p className="text-sm text-neutral-600">{item.customer_name}</p>
                   </div>
                 ) : (
-                  <p className="font-medium text-neutral-900">{item.customerName}</p>
+                  <p className="font-medium text-neutral-900">{item.customer_name}</p>
                 )}
+                
                 <p className="text-sm text-neutral-600 capitalize">
-                  {item.quantity}x {item.itemType}
+                  {item.quantity}x {item.item_type}
                 </p>
+                
                 <div className="flex items-center text-xs text-neutral-500 mt-1">
                   <SafeIcon icon={FiClock} className="mr-1" />
-                  {new Date(item.updatedAt || item.createdAt).toLocaleDateString()}
+                  {new Date(item.updated_at || item.created_at).toLocaleDateString()}
                 </div>
               </div>
+              
               <div className="flex items-center space-x-2 ml-4">
                 <button
                   onClick={(e) => handlePrint(item, e)}
@@ -73,6 +78,7 @@ const FinishedOrders = ({ items, onPrintReceipt }) => {
                 >
                   <SafeIcon icon={FiPrinter} className="text-lg" />
                 </button>
+                
                 <Link
                   to={`/item/${item.id}`}
                   className="p-2 text-neutral-400 hover:text-primary-500 transition-colors duration-200"
@@ -84,6 +90,7 @@ const FinishedOrders = ({ items, onPrintReceipt }) => {
           ))}
         </div>
       )}
+
       {finishedItems.length > 0 && (
         <div className="mt-4 pt-4 border-t border-neutral-200">
           <Link

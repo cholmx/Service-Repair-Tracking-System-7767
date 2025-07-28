@@ -5,24 +5,29 @@ import { useServiceOrders } from '../hooks/useServiceOrders';
 import * as FiIcons from 'react-icons/fi';
 import SafeIcon from '../common/SafeIcon';
 
-const { FiUser, FiPhone, FiMail, FiPackage, FiFileText, FiCalendar, FiSave, FiPlus, FiMinus, FiHome } = FiIcons;
+const { FiUser, FiPhone, FiMail, FiPackage, FiFileText, FiCalendar, FiSave, FiPlus, FiMinus, FiHome, FiHash } = FiIcons;
 
 const ItemIntake = () => {
   const navigate = useNavigate();
   const { addItem, loading: serviceLoading } = useServiceOrders();
-  
+
   const [formData, setFormData] = useState({
     customerName: '',
     customerPhone: '',
     customerEmail: '',
     company: '',
     items: [
-      { itemType: '', quantity: 1, description: '' }
+      {
+        itemType: '',
+        quantity: 1,
+        serialNumber: '',
+        description: ''
+      }
     ],
     urgency: 'normal',
     expectedCompletion: ''
   });
-  
+
   const [errors, setErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -32,7 +37,7 @@ const ItemIntake = () => {
       ...prev,
       [name]: value
     }));
-    
+
     if (errors[name]) {
       setErrors(prev => ({
         ...prev,
@@ -43,7 +48,10 @@ const ItemIntake = () => {
 
   const handleItemChange = (index, field, value) => {
     const newItems = [...formData.items];
-    newItems[index] = { ...newItems[index], [field]: value };
+    newItems[index] = {
+      ...newItems[index],
+      [field]: value
+    };
     setFormData(prev => ({
       ...prev,
       items: newItems
@@ -64,7 +72,12 @@ const ItemIntake = () => {
       ...prev,
       items: [
         ...prev.items,
-        { itemType: '', quantity: 1, description: '' }
+        {
+          itemType: '',
+          quantity: 1,
+          serialNumber: '',
+          description: ''
+        }
       ]
     }));
   };
@@ -104,14 +117,16 @@ const ItemIntake = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     if (validateForm()) {
       setIsSubmitting(true);
       try {
         await addItem(formData);
         navigate('/dashboard');
       } catch (error) {
-        setErrors({ general: error.message || 'Failed to create service orders. Please try again.' });
+        setErrors({
+          general: error.message || 'Failed to create service orders. Please try again.'
+        });
       } finally {
         setIsSubmitting(false);
       }
@@ -155,7 +170,6 @@ const ItemIntake = () => {
           {/* Customer Information */}
           <div className="mb-8">
             <h2 className="text-xl font-semibold text-neutral-900 border-b border-neutral-200 pb-2 mb-6">Customer Information</h2>
-            
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
               <div>
                 <label className="flex items-center text-sm font-medium text-neutral-700 mb-2">
@@ -174,7 +188,6 @@ const ItemIntake = () => {
                   <p className="mt-1 text-sm text-red-600">{errors.customerName}</p>
                 )}
               </div>
-
               <div>
                 <label className="flex items-center text-sm font-medium text-neutral-700 mb-2">
                   <SafeIcon icon={FiHome} className="mr-2 text-primary-500" />
@@ -190,7 +203,6 @@ const ItemIntake = () => {
                 />
               </div>
             </div>
-
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
                 <label className="flex items-center text-sm font-medium text-neutral-700 mb-2">
@@ -209,7 +221,6 @@ const ItemIntake = () => {
                   <p className="mt-1 text-sm text-red-600">{errors.customerPhone}</p>
                 )}
               </div>
-
               <div>
                 <label className="flex items-center text-sm font-medium text-neutral-700 mb-2">
                   <SafeIcon icon={FiMail} className="mr-2 text-primary-500" />
@@ -281,7 +292,6 @@ const ItemIntake = () => {
                         <p className="mt-1 text-sm text-red-600">{errors[`items.${index}.itemType`]}</p>
                       )}
                     </div>
-
                     <div>
                       <label className="block text-sm font-medium text-neutral-700 mb-2">
                         Quantity *
@@ -298,6 +308,20 @@ const ItemIntake = () => {
                         <p className="mt-1 text-sm text-red-600">{errors[`items.${index}.quantity`]}</p>
                       )}
                     </div>
+                  </div>
+
+                  <div className="mb-4">
+                    <label className="flex items-center text-sm font-medium text-neutral-700 mb-2">
+                      <SafeIcon icon={FiHash} className="mr-2 text-primary-500" />
+                      Serial Number
+                    </label>
+                    <input
+                      type="text"
+                      value={item.serialNumber || ''}
+                      onChange={(e) => handleItemChange(index, 'serialNumber', e.target.value)}
+                      className={inputClasses}
+                      placeholder="Enter serial number (optional)"
+                    />
                   </div>
 
                   <div>
@@ -337,7 +361,6 @@ const ItemIntake = () => {
                 <option value="urgent">Urgent</option>
               </select>
             </div>
-
             <div>
               <label className="flex items-center text-sm font-medium text-neutral-700 mb-2">
                 <SafeIcon icon={FiCalendar} className="mr-2 text-primary-500" />

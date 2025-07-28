@@ -97,6 +97,7 @@ export const useServiceOrders = () => {
           customer_email: formData.customerEmail || null,
           company: formData.company || null,
           item_type: item.itemType,
+          serial_number: item.serialNumber || null,
           quantity: item.quantity,
           description: item.description,
           urgency: formData.urgency,

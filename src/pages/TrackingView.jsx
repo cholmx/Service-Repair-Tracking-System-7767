@@ -6,7 +6,7 @@ import * as FiIcons from 'react-icons/fi';
 import SafeIcon from '../common/SafeIcon';
 import StatusBadge from '../components/StatusBadge';
 
-const { FiSearch, FiFilter, FiEye, FiArchive, FiX, FiRefreshCw, FiTrash2 } = FiIcons;
+const { FiSearch, FiFilter, FiEye, FiArchive, FiX, FiRefreshCw, FiTrash2, FiHash } = FiIcons;
 
 const TrackingView = () => {
   const { items, archivedItems, loading, archiveItem, deleteArchivedItem } = useServiceOrders();
@@ -40,11 +40,13 @@ const TrackingView = () => {
 
   const filteredItems = activeItems
     .filter(item => {
-      const matchesSearch = item.customer_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                           item.item_type.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                           item.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                           item.id.includes(searchTerm) ||
-                           (item.company && item.company.toLowerCase().includes(searchTerm.toLowerCase()));
+      const matchesSearch = 
+        item.customer_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        item.item_type.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        item.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        item.id.includes(searchTerm) ||
+        (item.company && item.company.toLowerCase().includes(searchTerm.toLowerCase())) ||
+        (item.serial_number && item.serial_number.toLowerCase().includes(searchTerm.toLowerCase()));
       
       const matchesStatus = statusFilter === 'all' || item.status === statusFilter;
       
@@ -135,9 +137,9 @@ const TrackingView = () => {
                 {showArchived ? 'Archived Service Orders' : 'Track Service Orders'}
               </h1>
               <p className="text-neutral-600">
-                {showArchived 
-                  ? `View ${archivedItems.length} archived Service Orders`
-                  : 'Search and monitor all active Service Orders'
+                {showArchived ? 
+                  `View ${archivedItems.length} archived Service Orders` : 
+                  'Search and monitor all active Service Orders'
                 }
               </p>
             </div>
@@ -145,9 +147,7 @@ const TrackingView = () => {
               <button
                 onClick={toggleArchiveView}
                 className={`flex items-center px-4 py-2 rounded-lg font-medium transition-all duration-200 ${
-                  showArchived 
-                    ? 'bg-primary-500 text-white hover:bg-primary-600' 
-                    : 'bg-neutral-200 text-neutral-700 hover:bg-neutral-300'
+                  showArchived ? 'bg-primary-500 text-white hover:bg-primary-600' : 'bg-neutral-200 text-neutral-700 hover:bg-neutral-300'
                 }`}
               >
                 <SafeIcon icon={showArchived ? FiRefreshCw : FiArchive} className="mr-2" />
@@ -176,7 +176,7 @@ const TrackingView = () => {
               <SafeIcon icon={FiSearch} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-neutral-400" />
               <input
                 type="text"
-                placeholder="Search by customer, company, Service Order type, or description..."
+                placeholder="Search by customer, company, serial number, or item type..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="w-full pl-10 pr-4 py-3 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent bg-white"
@@ -223,9 +223,9 @@ const TrackingView = () => {
           {filteredItems.length === 0 ? (
             <div className="p-12 text-center">
               <p className="text-neutral-500 text-lg">
-                {showArchived 
-                  ? 'No archived Service Orders found matching your criteria'
-                  : 'No Service Orders found matching your criteria'
+                {showArchived ? 
+                  'No archived Service Orders found matching your criteria' : 
+                  'No Service Orders found matching your criteria'
                 }
               </p>
             </div>
@@ -284,6 +284,12 @@ const TrackingView = () => {
                           <div className="text-sm font-medium text-neutral-900 capitalize">
                             {item.quantity}x {item.item_type}
                           </div>
+                          {item.serial_number && (
+                            <div className="flex items-center text-sm text-neutral-500">
+                              <SafeIcon icon={FiHash} className="mr-1 text-xs" />
+                              <span>{item.serial_number}</span>
+                            </div>
+                          )}
                           <div className="text-sm text-neutral-500 line-clamp-2">
                             {item.description}
                           </div>
@@ -304,7 +310,7 @@ const TrackingView = () => {
                             <SafeIcon icon={FiEye} className="mr-1" />
                             View
                           </Link>
-                          
+
                           {!showArchived && (item.status === 'completed' || item.status === 'ready') && (
                             <button
                               onClick={(e) => handleArchive(item.id, e)}
@@ -315,7 +321,7 @@ const TrackingView = () => {
                               Archive
                             </button>
                           )}
-                          
+
                           {showArchived && (
                             <button
                               onClick={(e) => handleDeleteConfirm(item.id, e)}
@@ -359,13 +365,11 @@ const TrackingView = () => {
                 </p>
               </div>
             </div>
-            
             <div className="mb-6">
               <p className="text-neutral-700">
                 Are you sure you want to permanently delete this archived service order? This action cannot be undone and all data will be lost.
               </p>
             </div>
-            
             <div className="flex justify-end space-x-3">
               <button
                 onClick={handleDeleteCancel}

@@ -6,7 +6,7 @@ import * as FiIcons from 'react-icons/fi';
 import SafeIcon from '../common/SafeIcon';
 import StatusBadge from '../components/StatusBadge';
 
-const { FiArrowLeft, FiEdit3, FiSave, FiX, FiClock, FiUser, FiPhone, FiMail, FiPackage, FiBuilding, FiPlus, FiTrash2, FiPrinter } = FiIcons;
+const { FiArrowLeft, FiEdit3, FiSave, FiX, FiClock, FiUser, FiPhone, FiMail, FiPackage, FiBuilding, FiPlus, FiTrash2, FiPrinter, FiHash } = FiIcons;
 
 const ItemDetails = ({ onPrintReceipt }) => {
   const { id } = useParams();
@@ -47,6 +47,7 @@ const ItemDetails = ({ onPrintReceipt }) => {
     setEditData({
       status: item.status,
       expected_completion: item.expected_completion || '',
+      serial_number: item.serial_number || '',
       statusNotes: '',
       parts: item.parts || [],
       labor: item.labor || [],
@@ -58,7 +59,7 @@ const ItemDetails = ({ onPrintReceipt }) => {
   const handleSave = async () => {
     try {
       setIsSaving(true);
-      
+
       // Calculate totals
       const partsTotal = editData.parts.reduce((sum, part) => sum + (part.quantity * part.price), 0);
       const laborTotal = editData.labor.reduce((sum, labor) => sum + (labor.hours * labor.rate), 0);
@@ -69,6 +70,7 @@ const ItemDetails = ({ onPrintReceipt }) => {
       const updateData = {
         status: editData.status,
         expected_completion: editData.expected_completion || null,
+        serial_number: editData.serial_number || null,
         parts: editData.parts,
         labor: editData.labor,
         tax_rate: editData.tax_rate,
@@ -81,14 +83,12 @@ const ItemDetails = ({ onPrintReceipt }) => {
       };
 
       console.log('Saving update data:', updateData);
-
       await updateItem(item.id, updateData);
       setIsEditing(false);
       setEditData({});
-      
+
       // Show success message
       console.log('Service order updated successfully!');
-      
     } catch (error) {
       console.error('Failed to update item:', error);
       alert('Failed to update service order. Please try again.');
@@ -124,10 +124,9 @@ const ItemDetails = ({ onPrintReceipt }) => {
     setEditData(prev => ({
       ...prev,
       parts: prev.parts.map((part, i) => 
-        i === index ? { 
-          ...part, 
-          [field]: field === 'quantity' || field === 'price' ? parseFloat(value) || 0 : value 
-        } : part
+        i === index ? 
+          { ...part, [field]: field === 'quantity' || field === 'price' ? parseFloat(value) || 0 : value } : 
+          part
       )
     }));
   };
@@ -150,10 +149,9 @@ const ItemDetails = ({ onPrintReceipt }) => {
     setEditData(prev => ({
       ...prev,
       labor: prev.labor.map((laborItem, i) => 
-        i === index ? { 
-          ...laborItem, 
-          [field]: field === 'hours' || field === 'rate' ? parseFloat(value) || 0 : value 
-        } : laborItem
+        i === index ? 
+          { ...laborItem, [field]: field === 'hours' || field === 'rate' ? parseFloat(value) || 0 : value } : 
+          laborItem
       )
     }));
   };
@@ -179,10 +177,7 @@ const ItemDetails = ({ onPrintReceipt }) => {
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
           <div className="flex items-center space-x-4">
-            <Link 
-              to="/tracking" 
-              className="flex items-center text-neutral-600 hover:text-neutral-900 transition-colors duration-200"
-            >
+            <Link to="/tracking" className="flex items-center text-neutral-600 hover:text-neutral-900 transition-colors duration-200">
               <SafeIcon icon={FiArrowLeft} className="mr-2" />
               Back to Tracking
             </Link>
@@ -244,6 +239,25 @@ const ItemDetails = ({ onPrintReceipt }) => {
                   <p className="font-medium">{item.quantity}x {item.item_type}</p>
                 </div>
               </div>
+
+              <div className="flex items-center">
+                <SafeIcon icon={FiHash} className="text-primary-500 mr-3" />
+                <div>
+                  <span className="text-sm text-neutral-500">Serial Number:</span>
+                  {isEditing ? (
+                    <input 
+                      type="text" 
+                      value={editData.serial_number || ''} 
+                      onChange={(e) => setEditData(prev => ({...prev, serial_number: e.target.value}))} 
+                      className={inputClasses}
+                      placeholder="Enter serial number" 
+                    />
+                  ) : (
+                    <p className="font-medium">{item.serial_number || 'Not specified'}</p>
+                  )}
+                </div>
+              </div>
+
               <div className="mt-6">
                 <span className="text-sm text-neutral-500">Description:</span>
                 <p className="mt-1 text-neutral-900 bg-neutral-50 p-3 rounded-lg">
@@ -271,6 +285,7 @@ const ItemDetails = ({ onPrintReceipt }) => {
                   )}
                 </div>
               </div>
+              
               {item.company && (
                 <div className="flex items-center">
                   <SafeIcon icon={FiBuilding} className="text-primary-500 mr-3" />
@@ -280,6 +295,7 @@ const ItemDetails = ({ onPrintReceipt }) => {
                   </div>
                 </div>
               )}
+
               <div className="flex items-center">
                 <SafeIcon icon={FiPhone} className="text-primary-500 mr-3" />
                 <div>
@@ -287,6 +303,7 @@ const ItemDetails = ({ onPrintReceipt }) => {
                   <p className="font-medium">{item.customer_phone}</p>
                 </div>
               </div>
+
               {item.customer_email && (
                 <div className="flex items-center">
                   <SafeIcon icon={FiMail} className="text-primary-500 mr-3" />
@@ -340,6 +357,7 @@ const ItemDetails = ({ onPrintReceipt }) => {
               )}
             </div>
           </div>
+
           {isEditing && (
             <div className="mt-6">
               <label className="block text-sm text-neutral-500 mb-2">Status Update Notes:</label>
@@ -368,6 +386,7 @@ const ItemDetails = ({ onPrintReceipt }) => {
               </button>
             )}
           </div>
+
           {isEditing ? (
             <div className="space-y-4">
               {editData.parts.map((part, index) => (
@@ -455,6 +474,7 @@ const ItemDetails = ({ onPrintReceipt }) => {
               </button>
             )}
           </div>
+
           {isEditing ? (
             <div className="space-y-4">
               {editData.labor.map((laborItem, index) => (
@@ -501,6 +521,7 @@ const ItemDetails = ({ onPrintReceipt }) => {
                   </div>
                 </div>
               ))}
+
               <div className="mt-6 p-4 bg-neutral-50 rounded-lg">
                 <label className="block text-sm text-neutral-500 mb-1">Tax Rate (%)</label>
                 <input

@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import * as FiIcons from 'react-icons/fi';
 import SafeIcon from '../common/SafeIcon';
 
-const { FiPackage, FiClock, FiTool, FiCheckCircle } = FiIcons;
+const { FiPackage, FiClock, FiTool, FiCheckCircle, FiInbox } = FiIcons;
 
 const StatsCards = ({ stats }) => {
   const navigate = useNavigate();
@@ -26,6 +26,17 @@ const StatsCards = ({ stats }) => {
       clickable: true
     },
     {
+      title: 'Newly Received',
+      value: stats.received,
+      icon: FiInbox,
+      bgColor: 'bg-white',
+      iconBg: 'bg-blue-100',
+      iconColor: 'text-blue-600',
+      textColor: 'text-neutral-900',
+      filter: 'received',
+      clickable: true
+    },
+    {
       title: 'In Progress',
       value: stats.inProgress,
       icon: FiTool,
@@ -41,14 +52,14 @@ const StatsCards = ({ stats }) => {
       value: stats.waitingParts,
       icon: FiClock,
       bgColor: 'bg-white',
-      iconBG: 'bg-orange-100',
+      iconBg: 'bg-orange-100',
       iconColor: 'text-orange-600',
       textColor: 'text-neutral-900',
       filter: 'waiting-parts',
       clickable: true
     },
     {
-      title: 'Ready',
+      title: 'Ready for Pickup',
       value: stats.ready,
       icon: FiCheckCircle,
       bgColor: 'bg-white',
@@ -61,7 +72,7 @@ const StatsCards = ({ stats }) => {
   ];
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
       {cards.map((card, index) => (
         <motion.div
           key={card.title}
@@ -77,7 +88,7 @@ const StatsCards = ({ stats }) => {
         >
           <div className="flex items-center justify-between">
             <div>
-              <p className={`text-sm font-medium text-neutral-600 mb-1`}>
+              <p className="text-sm font-medium text-neutral-600 mb-1">
                 {card.title}
               </p>
               <p className={`text-3xl font-bold ${card.textColor}`}>

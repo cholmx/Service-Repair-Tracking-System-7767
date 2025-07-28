@@ -1,12 +1,14 @@
 import React from 'react';
-import { motion } from 'framer-motion';
-import { useServiceOrders } from '../hooks/useServiceOrders';
+import {motion} from 'framer-motion';
+import {useServiceOrders} from '../hooks/useServiceOrders';
 import RecentItems from '../components/RecentItems';
 import StatsCards from '../components/StatsCards';
 import FinishedOrders from '../components/FinishedOrders';
+import QuoteManagement from '../components/QuoteManagement';
+import ReceivedOrders from '../components/ReceivedOrders';
 
-const Dashboard = ({ onPrintReceipt }) => {
-  const { items, loading, error } = useServiceOrders();
+const Dashboard = ({onPrintReceipt}) => {
+  const {items, loading, error} = useServiceOrders();
 
   if (loading) {
     return (
@@ -42,6 +44,11 @@ const Dashboard = ({ onPrintReceipt }) => {
     completed: items.filter(item => item.status === 'completed').length
   };
 
+  // Check if there are any quote-related items
+  const needsQuoteItems = items.filter(item => item.status === 'needs-quote');
+  const quoteApprovalItems = items.filter(item => item.status === 'quote-approval');
+  const hasQuoteItems = needsQuoteItems.length > 0 || quoteApprovalItems.length > 0;
+
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <motion.div
@@ -55,24 +62,83 @@ const Dashboard = ({ onPrintReceipt }) => {
         </div>
 
         <StatsCards stats={stats} />
+        
+        {/* Layout with quotes: Two rows with 2 cards each */}
+        {hasQuoteItems ? (
+          <>
+            {/* First Row - Newly Received Orders and Quote Management side by side */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mt-8">
+              {/* Newly Received Orders */}
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, delay: 0.2 }}
+              >
+                <ReceivedOrders items={items} />
+              </motion.div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mt-8">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.2 }}
-          >
-            <RecentItems items={items} />
-          </motion.div>
+              {/* Quote Management */}
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, delay: 0.3 }}
+              >
+                <QuoteManagement items={items} />
+              </motion.div>
+            </div>
 
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.3 }}
-          >
-            <FinishedOrders items={items} onPrintReceipt={onPrintReceipt} />
-          </motion.div>
-        </div>
+            {/* Second Row - Ready Service Orders and Finished Orders */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mt-8">
+              {/* Ready Service Orders */}
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, delay: 0.4 }}
+              >
+                <RecentItems items={items} />
+              </motion.div>
+
+              {/* Finished Orders */}
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, delay: 0.5 }}
+              >
+                <FinishedOrders items={items} onPrintReceipt={onPrintReceipt} />
+              </motion.div>
+            </div>
+          </>
+        ) : (
+          /* Layout without quotes: All three cards in one row */
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mt-8">
+            {/* Newly Received Orders */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.2 }}
+            >
+              <ReceivedOrders items={items} />
+            </motion.div>
+
+            {/* Ready Service Orders */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.3 }}
+            >
+              <RecentItems items={items} />
+            </motion.div>
+
+            {/* Finished Orders */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.4 }}
+            >
+              <FinishedOrders items={items} onPrintReceipt={onPrintReceipt} />
+            </motion.div>
+          </div>
+        )}
       </motion.div>
     </div>
   );

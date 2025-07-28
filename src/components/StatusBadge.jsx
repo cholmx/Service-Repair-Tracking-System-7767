@@ -5,10 +5,14 @@ const StatusBadge = ({ status }) => {
     switch (status) {
       case 'received':
         return { bg: 'bg-blue-100', text: 'text-blue-800', label: 'Received' };
+      case 'needs-quote':
+        return { bg: 'bg-indigo-100', text: 'text-indigo-800', label: 'Needs Quote' };
       case 'in-progress':
         return { bg: 'bg-yellow-100', text: 'text-yellow-800', label: 'In Progress' };
       case 'waiting-parts':
         return { bg: 'bg-orange-100', text: 'text-orange-800', label: 'Waiting on Parts' };
+      case 'quote-approval':
+        return { bg: 'bg-purple-100', text: 'text-purple-800', label: 'Awaiting Quote Approval' };
       case 'ready':
         return { bg: 'bg-green-100', text: 'text-green-800', label: 'Ready for Pickup or Delivery' };
       case 'completed':

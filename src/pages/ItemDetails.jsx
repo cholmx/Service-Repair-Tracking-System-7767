@@ -66,14 +66,29 @@ const ItemDetails = ({ onPrintReceipt }) => {
       const partsTotal = editData.parts.reduce((sum, part) => {
         return sum + (part.isWarranty ? 0 : (part.quantity * part.price));
       }, 0);
-      
+
       const laborTotal = editData.labor.reduce((sum, labor) => {
         return sum + (labor.isWarranty ? 0 : (labor.hours * labor.rate));
       }, 0);
-      
+
       const subtotal = partsTotal + laborTotal;
       const tax = subtotal * (editData.tax_rate / 100);
       const total = subtotal + tax;
+
+      // If status is changing from "needs-quote" to "quote-approval"
+      // Make sure we have parts or labor added
+      let statusNotes = editData.statusNotes || '';
+      if (item.status === 'needs-quote' && editData.status === 'quote-approval') {
+        if (editData.parts.length === 0 && editData.labor.length === 0) {
+          alert('Please add parts or labor to the quote before changing status to "Awaiting Quote Approval"');
+          setIsSaving(false);
+          return;
+        }
+        
+        if (!statusNotes) {
+          statusNotes = 'Quote prepared and awaiting customer approval';
+        }
+      }
 
       const updateData = {
         status: editData.status,
@@ -87,7 +102,7 @@ const ItemDetails = ({ onPrintReceipt }) => {
         subtotal,
         tax,
         total,
-        statusNotes: editData.statusNotes || ''
+        statusNotes
       };
 
       console.log('Saving update data:', updateData);
@@ -119,7 +134,7 @@ const ItemDetails = ({ onPrintReceipt }) => {
       item_type: item.item_type,
       quantity: item.quantity,
       description: item.description,
-      serial_number: item.serial_number || ''  // Added serial number to customer edit data
+      serial_number: item.serial_number || '' // Added serial number to customer edit data
     });
     setIsEditingCustomer(true);
   };
@@ -127,7 +142,6 @@ const ItemDetails = ({ onPrintReceipt }) => {
   const handleSaveCustomer = async () => {
     try {
       setIsSaving(true);
-
       const updateData = {
         customer_name: customerEditData.customer_name,
         customer_phone: customerEditData.customer_phone,
@@ -136,7 +150,7 @@ const ItemDetails = ({ onPrintReceipt }) => {
         item_type: customerEditData.item_type,
         quantity: customerEditData.quantity,
         description: customerEditData.description,
-        serial_number: customerEditData.serial_number || null  // Added serial number to update data
+        serial_number: customerEditData.serial_number || null // Added serial number to update data
       };
 
       console.log('Saving customer data:', updateData);
@@ -181,9 +195,9 @@ const ItemDetails = ({ onPrintReceipt }) => {
     setEditData(prev => ({
       ...prev,
       parts: prev.parts.map((part, i) => 
-        i === index ? 
-          { ...part, [field]: field === 'quantity' || field === 'price' ? parseFloat(value) || 0 : value } : 
-          part
+        i === index 
+          ? { ...part, [field]: field === 'quantity' || field === 'price' ? parseFloat(value) || 0 : value }
+          : part
       )
     }));
   };
@@ -192,9 +206,9 @@ const ItemDetails = ({ onPrintReceipt }) => {
     setEditData(prev => ({
       ...prev,
       parts: prev.parts.map((part, i) => 
-        i === index ? 
-          { ...part, isWarranty: !part.isWarranty, price: !part.isWarranty ? 0 : part.price } : 
-          part
+        i === index 
+          ? { ...part, isWarranty: !part.isWarranty, price: !part.isWarranty ? 0 : part.price }
+          : part
       )
     }));
   };
@@ -217,9 +231,9 @@ const ItemDetails = ({ onPrintReceipt }) => {
     setEditData(prev => ({
       ...prev,
       labor: prev.labor.map((laborItem, i) => 
-        i === index ? 
-          { ...laborItem, [field]: field === 'hours' || field === 'rate' ? parseFloat(value) || 0 : value } : 
-          laborItem
+        i === index 
+          ? { ...laborItem, [field]: field === 'hours' || field === 'rate' ? parseFloat(value) || 0 : value }
+          : laborItem
       )
     }));
   };
@@ -228,23 +242,43 @@ const ItemDetails = ({ onPrintReceipt }) => {
     setEditData(prev => ({
       ...prev,
       labor: prev.labor.map((laborItem, i) => 
-        i === index ? 
-          { ...laborItem, isWarranty: !laborItem.isWarranty, rate: !laborItem.isWarranty ? 0 : laborItem.rate } : 
-          laborItem
+        i === index 
+          ? { ...laborItem, isWarranty: !laborItem.isWarranty, rate: !laborItem.isWarranty ? 0 : laborItem.rate }
+          : laborItem
       )
     }));
   };
 
+  // Add options for the new "needs-quote" status
   const statusOptions = [
     { value: 'received', label: 'Received' },
+    { value: 'needs-quote', label: 'Needs Quote' },
     { value: 'in-progress', label: 'In Progress' },
     { value: 'waiting-parts', label: 'Waiting on Parts' },
+    { value: 'quote-approval', label: 'Awaiting Quote Approval' },
     { value: 'ready', label: 'Ready for Pickup or Delivery' },
     { value: 'completed', label: 'Completed' }
   ];
 
   const inputClasses = "w-full px-3 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent bg-white";
-  const canPrint = item.status === 'completed' || item.status === 'ready';
+  
+  const canPrint = item.status === 'completed' || item.status === 'ready' || item.status === 'quote-approval';
+  
+  // Special UI treatment for items that need quotes
+  const needsQuote = item.status === 'needs-quote';
+  const quoteAlert = needsQuote && (
+    <div className="bg-indigo-50 p-4 rounded-lg mb-6 border border-indigo-200">
+      <div className="flex">
+        <SafeIcon icon={FiIcons.FiAlertCircle} className="text-indigo-500 text-lg mr-3 flex-shrink-0 mt-0.5" />
+        <div>
+          <h3 className="font-medium text-indigo-800 mb-1">Quote Needed</h3>
+          <p className="text-sm text-indigo-700">
+            This service order needs a quote. Please add parts and labor details, then update the status to "Awaiting Quote Approval" when ready.
+          </p>
+        </div>
+      </div>
+    </div>
+  );
 
   return (
     <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -281,7 +315,7 @@ const ItemDetails = ({ onPrintReceipt }) => {
                 className="flex items-center px-3 py-2 text-sm bg-primary-500 text-white rounded-lg hover:bg-primary-600 transition-colors duration-200 shadow-lg"
               >
                 <SafeIcon icon={FiEdit3} className="mr-2 text-sm" />
-                Edit Status / Add Parts & Labor
+                {needsQuote ? 'Prepare Quote' : 'Edit Status / Add Parts & Labor'}
               </button>
             ) : (
               <div className="flex space-x-2">
@@ -306,6 +340,9 @@ const ItemDetails = ({ onPrintReceipt }) => {
           </div>
         </div>
 
+        {/* Quote Alert Banner */}
+        {needsQuote && quoteAlert}
+
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           {/* Item Information */}
           <div className="bg-white rounded-xl shadow-lg p-6">
@@ -321,7 +358,6 @@ const ItemDetails = ({ onPrintReceipt }) => {
                 </button>
               )}
             </div>
-            
             <div className="space-y-4">
               <div className="flex items-center">
                 <SafeIcon icon={FiPackage} className="text-primary-500 mr-3" />
@@ -350,26 +386,25 @@ const ItemDetails = ({ onPrintReceipt }) => {
                   )}
                 </div>
               </div>
-
               <div className="flex items-center">
                 <SafeIcon icon={FiHash} className="text-primary-500 mr-3" />
                 <div>
                   <span className="text-sm text-neutral-500">Serial Number:</span>
                   {isEditing ? (
-                    <input 
-                      type="text" 
-                      value={editData.serial_number || ''} 
-                      onChange={(e) => setEditData(prev => ({...prev, serial_number: e.target.value}))} 
+                    <input
+                      type="text"
+                      value={editData.serial_number || ''}
+                      onChange={(e) => setEditData(prev => ({ ...prev, serial_number: e.target.value }))}
                       className={inputClasses}
-                      placeholder="Enter serial number" 
+                      placeholder="Enter serial number"
                     />
                   ) : isEditingCustomer ? (
-                    <input 
-                      type="text" 
-                      value={customerEditData.serial_number || ''} 
-                      onChange={(e) => setCustomerEditData(prev => ({...prev, serial_number: e.target.value}))} 
+                    <input
+                      type="text"
+                      value={customerEditData.serial_number || ''}
+                      onChange={(e) => setCustomerEditData(prev => ({ ...prev, serial_number: e.target.value }))}
                       className={inputClasses}
-                      placeholder="Enter serial number" 
+                      placeholder="Enter serial number"
                     />
                   ) : (
                     <p className="font-medium">{item.serial_number || 'Not specified'}</p>
@@ -410,7 +445,6 @@ const ItemDetails = ({ onPrintReceipt }) => {
                 </button>
               )}
             </div>
-            
             <div className="space-y-4">
               <div className="flex items-center">
                 <SafeIcon icon={FiUser} className="text-primary-500 mr-3" />
@@ -436,7 +470,6 @@ const ItemDetails = ({ onPrintReceipt }) => {
                   )}
                 </div>
               </div>
-              
               <div className="flex items-center">
                 <SafeIcon icon={FiBuilding} className="text-primary-500 mr-3" />
                 <div>
@@ -454,7 +487,6 @@ const ItemDetails = ({ onPrintReceipt }) => {
                   )}
                 </div>
               </div>
-
               <div className="flex items-center">
                 <SafeIcon icon={FiPhone} className="text-primary-500 mr-3" />
                 <div>
@@ -472,7 +504,6 @@ const ItemDetails = ({ onPrintReceipt }) => {
                   )}
                 </div>
               </div>
-
               <div className="flex items-center">
                 <SafeIcon icon={FiMail} className="text-primary-500 mr-3" />
                 <div>
@@ -534,7 +565,6 @@ const ItemDetails = ({ onPrintReceipt }) => {
               )}
             </div>
           </div>
-
           {isEditing && (
             <div className="mt-6">
               <label className="block text-sm text-neutral-500 mb-2">Status Update Notes:</label>
@@ -543,7 +573,7 @@ const ItemDetails = ({ onPrintReceipt }) => {
                 onChange={(e) => setEditData(prev => ({ ...prev, statusNotes: e.target.value }))}
                 className={inputClasses}
                 rows={3}
-                placeholder="Add notes about this status update..."
+                placeholder={needsQuote ? "Add notes about the quote preparation..." : "Add notes about this status update..."}
               />
             </div>
           )}
@@ -607,8 +637,8 @@ const ItemDetails = ({ onPrintReceipt }) => {
                         type="button"
                         onClick={() => togglePartWarranty(index)}
                         className={`flex items-center justify-center px-3 py-2 rounded-lg text-sm font-medium transition-colors duration-200 ${
-                          part.isWarranty 
-                            ? 'bg-green-100 text-green-800 border-2 border-green-300' 
+                          part.isWarranty
+                            ? 'bg-green-100 text-green-800 border-2 border-green-300'
                             : 'bg-neutral-100 text-neutral-700 border-2 border-neutral-300 hover:bg-neutral-200'
                         }`}
                       >
@@ -726,8 +756,8 @@ const ItemDetails = ({ onPrintReceipt }) => {
                         type="button"
                         onClick={() => toggleLaborWarranty(index)}
                         className={`flex items-center justify-center px-3 py-2 rounded-lg text-sm font-medium transition-colors duration-200 ${
-                          laborItem.isWarranty 
-                            ? 'bg-green-100 text-green-800 border-2 border-green-300' 
+                          laborItem.isWarranty
+                            ? 'bg-green-100 text-green-800 border-2 border-green-300'
                             : 'bg-neutral-100 text-neutral-700 border-2 border-neutral-300 hover:bg-neutral-200'
                         }`}
                       >
@@ -785,6 +815,7 @@ const ItemDetails = ({ onPrintReceipt }) => {
                       </p>
                     </div>
                   ))}
+
                   <div className="border-t pt-3 mt-3 space-y-2">
                     <div className="flex justify-between">
                       <span>Labor Total:</span>

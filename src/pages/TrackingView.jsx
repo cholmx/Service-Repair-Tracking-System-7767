@@ -41,11 +41,11 @@ const TrackingView = () => {
   const filteredItems = activeItems
     .filter(item => {
       const matchesSearch = 
-        item.customer_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        item.item_type.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        item.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        item.id.includes(searchTerm) ||
-        (item.company && item.company.toLowerCase().includes(searchTerm.toLowerCase())) ||
+        item.customer_name.toLowerCase().includes(searchTerm.toLowerCase()) || 
+        item.item_type.toLowerCase().includes(searchTerm.toLowerCase()) || 
+        item.description.toLowerCase().includes(searchTerm.toLowerCase()) || 
+        item.id.includes(searchTerm) || 
+        (item.company && item.company.toLowerCase().includes(searchTerm.toLowerCase())) || 
         (item.serial_number && item.serial_number.toLowerCase().includes(searchTerm.toLowerCase()));
       
       const matchesStatus = statusFilter === 'all' || item.status === statusFilter;
@@ -118,6 +118,10 @@ const TrackingView = () => {
         return 'In Progress';
       case 'ready':
         return 'Ready for Pickup or Delivery';
+      case 'quote-approval':
+        return 'Awaiting Quote Approval';
+      case 'needs-quote':
+        return 'Needs Quote';
       default:
         return filter.charAt(0).toUpperCase() + filter.slice(1);
     }
@@ -137,17 +141,18 @@ const TrackingView = () => {
                 {showArchived ? 'Archived Service Orders' : 'Track Service Orders'}
               </h1>
               <p className="text-neutral-600">
-                {showArchived ? 
-                  `View ${archivedItems.length} archived Service Orders` : 
-                  'Search and monitor all active Service Orders'
-                }
+                {showArchived
+                  ? `View ${archivedItems.length} archived Service Orders`
+                  : 'Search and monitor all active Service Orders'}
               </p>
             </div>
             <div className="flex items-center space-x-3">
               <button
                 onClick={toggleArchiveView}
                 className={`flex items-center px-4 py-2 rounded-lg font-medium transition-all duration-200 ${
-                  showArchived ? 'bg-primary-500 text-white hover:bg-primary-600' : 'bg-neutral-200 text-neutral-700 hover:bg-neutral-300'
+                  showArchived
+                    ? 'bg-primary-500 text-white hover:bg-primary-600'
+                    : 'bg-neutral-200 text-neutral-700 hover:bg-neutral-300'
                 }`}
               >
                 <SafeIcon icon={showArchived ? FiRefreshCw : FiArchive} className="mr-2" />
@@ -173,7 +178,10 @@ const TrackingView = () => {
         <div className="bg-white rounded-xl shadow-lg p-6 mb-8">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="relative">
-              <SafeIcon icon={FiSearch} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-neutral-400" />
+              <SafeIcon
+                icon={FiSearch}
+                className="absolute left-3 top-1/2 transform -translate-y-1/2 text-neutral-400"
+              />
               <input
                 type="text"
                 placeholder="Search by customer, company, serial number, or item type..."
@@ -185,7 +193,10 @@ const TrackingView = () => {
 
             {!showArchived && (
               <div className="relative">
-                <SafeIcon icon={FiFilter} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-neutral-400" />
+                <SafeIcon
+                  icon={FiFilter}
+                  className="absolute left-3 top-1/2 transform -translate-y-1/2 text-neutral-400"
+                />
                 <select
                   value={statusFilter}
                   onChange={(e) => {
@@ -198,8 +209,10 @@ const TrackingView = () => {
                 >
                   <option value="all">All Statuses</option>
                   <option value="received">Received</option>
+                  <option value="needs-quote">Needs Quote</option>
                   <option value="in-progress">In Progress</option>
                   <option value="waiting-parts">Waiting on Parts</option>
+                  <option value="quote-approval">Awaiting Quote Approval</option>
                   <option value="ready">Ready for Pickup or Delivery</option>
                   <option value="completed">Completed</option>
                 </select>
@@ -223,10 +236,9 @@ const TrackingView = () => {
           {filteredItems.length === 0 ? (
             <div className="p-12 text-center">
               <p className="text-neutral-500 text-lg">
-                {showArchived ? 
-                  'No archived Service Orders found matching your criteria' : 
-                  'No Service Orders found matching your criteria'
-                }
+                {showArchived
+                  ? 'No archived Service Orders found matching your criteria'
+                  : 'No Service Orders found matching your criteria'}
               </p>
             </div>
           ) : (

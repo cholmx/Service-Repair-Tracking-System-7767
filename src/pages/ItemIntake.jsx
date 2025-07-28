@@ -5,66 +5,52 @@ import { useServiceOrders } from '../hooks/useServiceOrders';
 import * as FiIcons from 'react-icons/fi';
 import SafeIcon from '../common/SafeIcon';
 
-const { FiUser, FiPhone, FiMail, FiPackage, FiFileText, FiCalendar, FiSave, FiPlus, FiMinus, FiHome, FiHash } = FiIcons;
+const { FiUser, FiPhone, FiMail, FiPackage, FiFileText, FiCalendar, FiSave, FiPlus, FiMinus, FiHome, FiHash, FiDollarSign } = FiIcons;
 
 const ItemIntake = () => {
   const navigate = useNavigate();
   const { addItem, loading: serviceLoading } = useServiceOrders();
-
   const [formData, setFormData] = useState({
     customerName: '',
     customerPhone: '',
     customerEmail: '',
     company: '',
     items: [
-      {
-        itemType: '',
-        quantity: 1,
-        serialNumber: '',
-        description: ''
-      }
+      { itemType: '', quantity: 1, serialNumber: '', description: '', needsQuote: false }
     ],
     urgency: 'normal',
     expectedCompletion: ''
   });
-
   const [errors, setErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
-
+    setFormData(prev => ({ ...prev, [name]: value }));
     if (errors[name]) {
-      setErrors(prev => ({
-        ...prev,
-        [name]: ''
-      }));
+      setErrors(prev => ({ ...prev, [name]: '' }));
     }
   };
 
   const handleItemChange = (index, field, value) => {
     const newItems = [...formData.items];
-    newItems[index] = {
-      ...newItems[index],
-      [field]: value
-    };
-    setFormData(prev => ({
-      ...prev,
-      items: newItems
-    }));
-
+    newItems[index] = { ...newItems[index], [field]: value };
+    setFormData(prev => ({ ...prev, items: newItems }));
+    
     // Clear errors for this item
     const errorKey = `items.${index}.${field}`;
     if (errors[errorKey]) {
-      setErrors(prev => ({
-        ...prev,
-        [errorKey]: ''
-      }));
+      setErrors(prev => ({ ...prev, [errorKey]: '' }));
     }
+  };
+
+  const toggleNeedsQuote = (index) => {
+    const newItems = [...formData.items];
+    newItems[index] = { 
+      ...newItems[index], 
+      needsQuote: !newItems[index].needsQuote 
+    };
+    setFormData(prev => ({ ...prev, items: newItems }));
   };
 
   const addItemToForm = () => {
@@ -72,12 +58,7 @@ const ItemIntake = () => {
       ...prev,
       items: [
         ...prev.items,
-        {
-          itemType: '',
-          quantity: 1,
-          serialNumber: '',
-          description: ''
-        }
+        { itemType: '', quantity: 1, serialNumber: '', description: '', needsQuote: false }
       ]
     }));
   };
@@ -117,16 +98,26 @@ const ItemIntake = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
     if (validateForm()) {
       setIsSubmitting(true);
       try {
-        await addItem(formData);
+        // Check if any items need quotes and set initial status accordingly
+        const processedItems = formData.items.map(item => {
+          // If item needs a quote, we'll let the backend know
+          return {
+            ...item,
+            initialStatus: item.needsQuote ? 'needs-quote' : 'received'
+          };
+        });
+
+        await addItem({
+          ...formData,
+          items: processedItems
+        });
+        
         navigate('/dashboard');
       } catch (error) {
-        setErrors({
-          general: error.message || 'Failed to create service orders. Please try again.'
-        });
+        setErrors({ general: error.message || 'Failed to create service orders. Please try again.' });
       } finally {
         setIsSubmitting(false);
       }
@@ -251,7 +242,6 @@ const ItemIntake = () => {
                 Add Item to Service Order
               </button>
             </div>
-
             <div className="space-y-6">
               {formData.items.map((item, index) => (
                 <motion.div
@@ -274,7 +264,6 @@ const ItemIntake = () => {
                       </button>
                     )}
                   </div>
-
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                     <div>
                       <label className="flex items-center text-sm font-medium text-neutral-700 mb-2">
@@ -309,7 +298,6 @@ const ItemIntake = () => {
                       )}
                     </div>
                   </div>
-
                   <div className="mb-4">
                     <label className="flex items-center text-sm font-medium text-neutral-700 mb-2">
                       <SafeIcon icon={FiHash} className="mr-2 text-primary-500" />
@@ -323,8 +311,7 @@ const ItemIntake = () => {
                       placeholder="Enter serial number (optional)"
                     />
                   </div>
-
-                  <div>
+                  <div className="mb-4">
                     <label className="flex items-center text-sm font-medium text-neutral-700 mb-2">
                       <SafeIcon icon={FiFileText} className="mr-2 text-primary-500" />
                       Description *
@@ -338,6 +325,27 @@ const ItemIntake = () => {
                     />
                     {errors[`items.${index}.description`] && (
                       <p className="mt-1 text-sm text-red-600">{errors[`items.${index}.description`]}</p>
+                    )}
+                  </div>
+                  
+                  {/* Quote Needed Button */}
+                  <div className="mt-4">
+                    <button
+                      type="button"
+                      onClick={() => toggleNeedsQuote(index)}
+                      className={`flex items-center px-4 py-2 rounded-lg transition-colors duration-200 ${
+                        item.needsQuote
+                          ? 'bg-purple-100 text-purple-800 border-2 border-purple-300'
+                          : 'bg-neutral-100 text-neutral-700 border border-neutral-300 hover:bg-neutral-200'
+                      }`}
+                    >
+                      <SafeIcon icon={FiDollarSign} className="mr-2" />
+                      {item.needsQuote ? 'Quote Needed' : 'Mark as Needs Quote'}
+                    </button>
+                    {item.needsQuote && (
+                      <p className="mt-2 text-sm text-purple-600">
+                        This item will be marked for a technician to prepare a quote before proceeding
+                      </p>
                     )}
                   </div>
                 </motion.div>

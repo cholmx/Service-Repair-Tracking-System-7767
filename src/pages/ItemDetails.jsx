@@ -12,7 +12,9 @@ const ItemDetails = ({ onPrintReceipt }) => {
   const { id } = useParams();
   const { items, archivedItems, updateItem, loading } = useServiceOrders();
   const [isEditing, setIsEditing] = useState(false);
+  const [isEditingCustomer, setIsEditingCustomer] = useState(false);
   const [editData, setEditData] = useState({});
+  const [customerEditData, setCustomerEditData] = useState({});
   const [isSaving, setIsSaving] = useState(false);
 
   // Find item in both active and archived items
@@ -106,6 +108,55 @@ const ItemDetails = ({ onPrintReceipt }) => {
   const handleCancel = () => {
     setIsEditing(false);
     setEditData({});
+  };
+
+  const handleEditCustomer = () => {
+    setCustomerEditData({
+      customer_name: item.customer_name,
+      customer_phone: item.customer_phone,
+      customer_email: item.customer_email || '',
+      company: item.company || '',
+      item_type: item.item_type,
+      quantity: item.quantity,
+      description: item.description,
+      serial_number: item.serial_number || ''  // Added serial number to customer edit data
+    });
+    setIsEditingCustomer(true);
+  };
+
+  const handleSaveCustomer = async () => {
+    try {
+      setIsSaving(true);
+
+      const updateData = {
+        customer_name: customerEditData.customer_name,
+        customer_phone: customerEditData.customer_phone,
+        customer_email: customerEditData.customer_email || null,
+        company: customerEditData.company || null,
+        item_type: customerEditData.item_type,
+        quantity: customerEditData.quantity,
+        description: customerEditData.description,
+        serial_number: customerEditData.serial_number || null  // Added serial number to update data
+      };
+
+      console.log('Saving customer data:', updateData);
+      await updateItem(item.id, updateData);
+      setIsEditingCustomer(false);
+      setCustomerEditData({});
+
+      // Show success message
+      console.log('Customer information updated successfully!');
+    } catch (error) {
+      console.error('Failed to update customer information:', error);
+      alert('Failed to update customer information. Please try again.');
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleCancelCustomer = () => {
+    setIsEditingCustomer(false);
+    setCustomerEditData({});
   };
 
   const handlePrint = () => {
@@ -224,7 +275,7 @@ const ItemDetails = ({ onPrintReceipt }) => {
                 Print Receipt
               </button>
             )}
-            {!isEditing ? (
+            {!isEditing && !isEditingCustomer ? (
               <button
                 onClick={handleEdit}
                 className="flex items-center px-3 py-2 text-sm bg-primary-500 text-white rounded-lg hover:bg-primary-600 transition-colors duration-200 shadow-lg"
@@ -235,7 +286,7 @@ const ItemDetails = ({ onPrintReceipt }) => {
             ) : (
               <div className="flex space-x-2">
                 <button
-                  onClick={handleSave}
+                  onClick={isEditingCustomer ? handleSaveCustomer : handleSave}
                   disabled={isSaving}
                   className="flex items-center px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200 shadow-lg"
                 >
@@ -243,7 +294,7 @@ const ItemDetails = ({ onPrintReceipt }) => {
                   {isSaving ? 'Saving...' : 'Save'}
                 </button>
                 <button
-                  onClick={handleCancel}
+                  onClick={isEditingCustomer ? handleCancelCustomer : handleCancel}
                   disabled={isSaving}
                   className="flex items-center px-4 py-2 bg-neutral-600 text-white rounded-lg hover:bg-neutral-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200 shadow-lg"
                 >
@@ -258,13 +309,45 @@ const ItemDetails = ({ onPrintReceipt }) => {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           {/* Item Information */}
           <div className="bg-white rounded-xl shadow-lg p-6">
-            <h2 className="text-xl font-semibold text-neutral-900 mb-6">Service Order Information</h2>
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-xl font-semibold text-neutral-900">Service Order Information</h2>
+              {!isEditing && !isEditingCustomer && (
+                <button
+                  onClick={handleEditCustomer}
+                  className="flex items-center px-3 py-1 text-sm bg-neutral-100 text-neutral-700 rounded-lg hover:bg-neutral-200 transition-colors duration-200"
+                >
+                  <SafeIcon icon={FiEdit3} className="mr-1 text-xs" />
+                  Edit
+                </button>
+              )}
+            </div>
+            
             <div className="space-y-4">
               <div className="flex items-center">
                 <SafeIcon icon={FiPackage} className="text-primary-500 mr-3" />
                 <div>
                   <span className="text-sm text-neutral-500">Service Order:</span>
-                  <p className="font-medium">{item.quantity}x {item.item_type}</p>
+                  {isEditingCustomer ? (
+                    <div className="flex items-center mt-1 space-x-2">
+                      <input
+                        type="number"
+                        value={customerEditData.quantity}
+                        onChange={(e) => setCustomerEditData(prev => ({ ...prev, quantity: parseInt(e.target.value) || 1 }))}
+                        className={`${inputClasses} w-16`}
+                        min="1"
+                      />
+                      <span className="text-neutral-700">x</span>
+                      <input
+                        type="text"
+                        value={customerEditData.item_type}
+                        onChange={(e) => setCustomerEditData(prev => ({ ...prev, item_type: e.target.value }))}
+                        className={inputClasses}
+                        placeholder="Item type"
+                      />
+                    </div>
+                  ) : (
+                    <p className="font-medium">{item.quantity}x {item.item_type}</p>
+                  )}
                 </div>
               </div>
 
@@ -280,6 +363,14 @@ const ItemDetails = ({ onPrintReceipt }) => {
                       className={inputClasses}
                       placeholder="Enter serial number" 
                     />
+                  ) : isEditingCustomer ? (
+                    <input 
+                      type="text" 
+                      value={customerEditData.serial_number || ''} 
+                      onChange={(e) => setCustomerEditData(prev => ({...prev, serial_number: e.target.value}))} 
+                      className={inputClasses}
+                      placeholder="Enter serial number" 
+                    />
                   ) : (
                     <p className="font-medium">{item.serial_number || 'Not specified'}</p>
                   )}
@@ -288,59 +379,117 @@ const ItemDetails = ({ onPrintReceipt }) => {
 
               <div className="mt-6">
                 <span className="text-sm text-neutral-500">Description:</span>
-                <p className="mt-1 text-neutral-900 bg-neutral-50 p-3 rounded-lg">
-                  {item.description}
-                </p>
+                {isEditingCustomer ? (
+                  <textarea
+                    value={customerEditData.description}
+                    onChange={(e) => setCustomerEditData(prev => ({ ...prev, description: e.target.value }))}
+                    rows={3}
+                    className={`${inputClasses} mt-1 w-full`}
+                    placeholder="Describe the issue or service needed..."
+                  />
+                ) : (
+                  <p className="mt-1 text-neutral-900 bg-neutral-50 p-3 rounded-lg">
+                    {item.description}
+                  </p>
+                )}
               </div>
             </div>
           </div>
 
           {/* Customer Information */}
           <div className="bg-white rounded-xl shadow-lg p-6">
-            <h2 className="text-xl font-semibold text-neutral-900 mb-6">Customer Information</h2>
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-xl font-semibold text-neutral-900">Customer Information</h2>
+              {!isEditing && !isEditingCustomer && (
+                <button
+                  onClick={handleEditCustomer}
+                  className="flex items-center px-3 py-1 text-sm bg-neutral-100 text-neutral-700 rounded-lg hover:bg-neutral-200 transition-colors duration-200"
+                >
+                  <SafeIcon icon={FiEdit3} className="mr-1 text-xs" />
+                  Edit
+                </button>
+              )}
+            </div>
+            
             <div className="space-y-4">
               <div className="flex items-center">
                 <SafeIcon icon={FiUser} className="text-primary-500 mr-3" />
                 <div>
                   <span className="text-sm text-neutral-500">Name:</span>
-                  {item.company ? (
-                    <div>
-                      <div className="font-medium text-neutral-900">{item.company}</div>
-                      <div className="text-neutral-700">{item.customer_name}</div>
-                    </div>
+                  {isEditingCustomer ? (
+                    <input
+                      type="text"
+                      value={customerEditData.customer_name}
+                      onChange={(e) => setCustomerEditData(prev => ({ ...prev, customer_name: e.target.value }))}
+                      className={`${inputClasses} mt-1 w-full`}
+                      placeholder="Customer name"
+                    />
                   ) : (
-                    <div className="font-medium text-neutral-900">{item.customer_name}</div>
+                    item.company ? (
+                      <div>
+                        <div className="font-medium text-neutral-900">{item.company}</div>
+                        <div className="text-neutral-700">{item.customer_name}</div>
+                      </div>
+                    ) : (
+                      <div className="font-medium text-neutral-900">{item.customer_name}</div>
+                    )
                   )}
                 </div>
               </div>
               
-              {item.company && (
-                <div className="flex items-center">
-                  <SafeIcon icon={FiBuilding} className="text-primary-500 mr-3" />
-                  <div>
-                    <span className="text-sm text-neutral-500">Company:</span>
-                    <p className="font-medium">{item.company}</p>
-                  </div>
+              <div className="flex items-center">
+                <SafeIcon icon={FiBuilding} className="text-primary-500 mr-3" />
+                <div>
+                  <span className="text-sm text-neutral-500">Company:</span>
+                  {isEditingCustomer ? (
+                    <input
+                      type="text"
+                      value={customerEditData.company || ''}
+                      onChange={(e) => setCustomerEditData(prev => ({ ...prev, company: e.target.value }))}
+                      className={`${inputClasses} mt-1 w-full`}
+                      placeholder="Company name (optional)"
+                    />
+                  ) : (
+                    <p className="font-medium">{item.company || 'Not specified'}</p>
+                  )}
                 </div>
-              )}
+              </div>
 
               <div className="flex items-center">
                 <SafeIcon icon={FiPhone} className="text-primary-500 mr-3" />
                 <div>
                   <span className="text-sm text-neutral-500">Phone:</span>
-                  <p className="font-medium">{item.customer_phone}</p>
+                  {isEditingCustomer ? (
+                    <input
+                      type="tel"
+                      value={customerEditData.customer_phone}
+                      onChange={(e) => setCustomerEditData(prev => ({ ...prev, customer_phone: e.target.value }))}
+                      className={`${inputClasses} mt-1 w-full`}
+                      placeholder="Phone number"
+                    />
+                  ) : (
+                    <p className="font-medium">{item.customer_phone}</p>
+                  )}
                 </div>
               </div>
 
-              {item.customer_email && (
-                <div className="flex items-center">
-                  <SafeIcon icon={FiMail} className="text-primary-500 mr-3" />
-                  <div>
-                    <span className="text-sm text-neutral-500">Email:</span>
-                    <p className="font-medium">{item.customer_email}</p>
-                  </div>
+              <div className="flex items-center">
+                <SafeIcon icon={FiMail} className="text-primary-500 mr-3" />
+                <div>
+                  <span className="text-sm text-neutral-500">Email:</span>
+                  {isEditingCustomer ? (
+                    <input
+                      type="email"
+                      value={customerEditData.customer_email || ''}
+                      onChange={(e) => setCustomerEditData(prev => ({ ...prev, customer_email: e.target.value }))}
+                      className={`${inputClasses} mt-1 w-full`}
+                      placeholder="Email address (optional)"
+                    />
+                  ) : (
+                    <p className="font-medium">{item.customer_email || 'Not specified'}</p>
+                  )}
                 </div>
-              )}
+              </div>
             </div>
           </div>
         </div>

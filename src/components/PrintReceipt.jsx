@@ -2,7 +2,7 @@ import React from 'react';
 import * as FiIcons from 'react-icons/fi';
 import SafeIcon from '../common/SafeIcon';
 
-const { FiTool, FiHash } = FiIcons;
+const { FiTool, FiHash, FiShield } = FiIcons;
 
 const PrintReceipt = ({ item, onClose }) => {
   const handlePrint = () => {
@@ -61,13 +61,27 @@ const PrintReceipt = ({ item, onClose }) => {
             .pr-2 {padding-right: 4px;}
             .flex-1 {flex: 1;}
             .bg-blue-50 {background-color: #eff6ff;}
+            .bg-green-50 {background-color: #f0fdf4;}
             .p-2 {padding: 8px;}
+            .px-2 {padding-left: 8px; padding-right: 8px;}
+            .py-1 {padding-top: 4px; padding-bottom: 4px;}
             .rounded {border-radius: 4px;}
+            .warranty-badge {
+              background-color: #dcfce7;
+              color: #166534;
+              padding: 2px 6px;
+              border-radius: 12px;
+              font-size: 8pt;
+              font-weight: 500;
+              margin-left: 6px;
+            }
 
             @media print {
               body {print-color-adjust: exact;}
               .print-receipt {padding: 10px;}
               .bg-blue-50 {background-color: #f8f9fa !important;}
+              .bg-green-50 {background-color: #f0fdf4 !important;}
+              .warranty-badge {background-color: #dcfce7 !important; color: #166534 !important;}
             }
           </style>
         </head>
@@ -236,10 +250,17 @@ const PrintReceipt = ({ item, onClose }) => {
                     {item.parts.slice(0, 4).map((part, index) => (
                       <div key={index} className="flex justify-between text-xs">
                         <div className="flex-1 pr-2">
-                          <div className="font-medium truncate">{part.description}</div>
-                          <div className="text-neutral-600">{part.quantity} @ ${part.price.toFixed(2)}</div>
+                          <div className="font-medium truncate">
+                            {part.description}
+                            {part.isWarranty && <span className="warranty-badge">⚡ Warranty</span>}
+                          </div>
+                          <div className="text-neutral-600">
+                            {part.quantity} {part.isWarranty ? '(Under Warranty)' : `@ $${part.price.toFixed(2)}`}
+                          </div>
                         </div>
-                        <div className="font-medium">${(part.quantity * part.price).toFixed(2)}</div>
+                        <div className="font-medium">
+                          {part.isWarranty ? 'Warranty' : `$${(part.quantity * part.price).toFixed(2)}`}
+                        </div>
                       </div>
                     ))}
                     {item.parts.length > 4 && (
@@ -265,10 +286,17 @@ const PrintReceipt = ({ item, onClose }) => {
                     {item.labor.slice(0, 4).map((labor, index) => (
                       <div key={index} className="flex justify-between text-xs">
                         <div className="flex-1 pr-2">
-                          <div className="font-medium truncate">{labor.description}</div>
-                          <div className="text-neutral-600">{labor.hours}h @ ${labor.rate.toFixed(2)}/hr</div>
+                          <div className="font-medium truncate">
+                            {labor.description}
+                            {labor.isWarranty && <span className="warranty-badge">⚡ Warranty</span>}
+                          </div>
+                          <div className="text-neutral-600">
+                            {labor.hours}h {labor.isWarranty ? '(Under Warranty)' : `@ $${labor.rate.toFixed(2)}/hr`}
+                          </div>
                         </div>
-                        <div className="font-medium">${(labor.hours * labor.rate).toFixed(2)}</div>
+                        <div className="font-medium">
+                          {labor.isWarranty ? 'Warranty' : `$${(labor.hours * labor.rate).toFixed(2)}`}
+                        </div>
                       </div>
                     ))}
                     {item.labor.length > 4 && (

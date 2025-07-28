@@ -6,7 +6,7 @@ import * as FiIcons from 'react-icons/fi';
 import SafeIcon from '../common/SafeIcon';
 import StatusBadge from '../components/StatusBadge';
 
-const { FiArrowLeft, FiEdit3, FiSave, FiX, FiClock, FiUser, FiPhone, FiMail, FiPackage, FiBuilding, FiPlus, FiTrash2, FiPrinter, FiHash } = FiIcons;
+const { FiArrowLeft, FiEdit3, FiSave, FiX, FiClock, FiUser, FiPhone, FiMail, FiPackage, FiBuilding, FiPlus, FiTrash2, FiPrinter, FiHash, FiShield } = FiIcons;
 
 const ItemDetails = ({ onPrintReceipt }) => {
   const { id } = useParams();
@@ -60,9 +60,15 @@ const ItemDetails = ({ onPrintReceipt }) => {
     try {
       setIsSaving(true);
 
-      // Calculate totals
-      const partsTotal = editData.parts.reduce((sum, part) => sum + (part.quantity * part.price), 0);
-      const laborTotal = editData.labor.reduce((sum, labor) => sum + (labor.hours * labor.rate), 0);
+      // Calculate totals (only include non-warranty items)
+      const partsTotal = editData.parts.reduce((sum, part) => {
+        return sum + (part.isWarranty ? 0 : (part.quantity * part.price));
+      }, 0);
+      
+      const laborTotal = editData.labor.reduce((sum, labor) => {
+        return sum + (labor.isWarranty ? 0 : (labor.hours * labor.rate));
+      }, 0);
+      
       const subtotal = partsTotal + laborTotal;
       const tax = subtotal * (editData.tax_rate / 100);
       const total = subtotal + tax;
@@ -109,7 +115,7 @@ const ItemDetails = ({ onPrintReceipt }) => {
   const addPart = () => {
     setEditData(prev => ({
       ...prev,
-      parts: [...prev.parts, { description: '', quantity: 1, price: 0 }]
+      parts: [...prev.parts, { description: '', quantity: 1, price: 0, isWarranty: false }]
     }));
   };
 
@@ -131,10 +137,21 @@ const ItemDetails = ({ onPrintReceipt }) => {
     }));
   };
 
+  const togglePartWarranty = (index) => {
+    setEditData(prev => ({
+      ...prev,
+      parts: prev.parts.map((part, i) => 
+        i === index ? 
+          { ...part, isWarranty: !part.isWarranty, price: !part.isWarranty ? 0 : part.price } : 
+          part
+      )
+    }));
+  };
+
   const addLabor = () => {
     setEditData(prev => ({
       ...prev,
-      labor: [...prev.labor, { description: '', hours: 1, rate: 0 }]
+      labor: [...prev.labor, { description: '', hours: 1, rate: 0, isWarranty: false }]
     }));
   };
 
@@ -151,6 +168,17 @@ const ItemDetails = ({ onPrintReceipt }) => {
       labor: prev.labor.map((laborItem, i) => 
         i === index ? 
           { ...laborItem, [field]: field === 'hours' || field === 'rate' ? parseFloat(value) || 0 : value } : 
+          laborItem
+      )
+    }));
+  };
+
+  const toggleLaborWarranty = (index) => {
+    setEditData(prev => ({
+      ...prev,
+      labor: prev.labor.map((laborItem, i) => 
+        i === index ? 
+          { ...laborItem, isWarranty: !laborItem.isWarranty, rate: !laborItem.isWarranty ? 0 : laborItem.rate } : 
           laborItem
       )
     }));
@@ -390,45 +418,63 @@ const ItemDetails = ({ onPrintReceipt }) => {
           {isEditing ? (
             <div className="space-y-4">
               {editData.parts.map((part, index) => (
-                <div key={index} className="grid grid-cols-1 md:grid-cols-5 gap-4 p-4 bg-neutral-50 rounded-lg">
-                  <div className="md:col-span-2">
-                    <label className="block text-sm text-neutral-500 mb-1">Description</label>
-                    <input
-                      type="text"
-                      value={part.description}
-                      onChange={(e) => updatePart(index, 'description', e.target.value)}
-                      className={inputClasses}
-                      placeholder="Part description"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm text-neutral-500 mb-1">Quantity</label>
-                    <input
-                      type="number"
-                      value={part.quantity}
-                      onChange={(e) => updatePart(index, 'quantity', e.target.value)}
-                      className={inputClasses}
-                      min="1"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm text-neutral-500 mb-1">Price ($)</label>
-                    <input
-                      type="number"
-                      value={part.price}
-                      onChange={(e) => updatePart(index, 'price', e.target.value)}
-                      className={inputClasses}
-                      min="0"
-                      step="0.01"
-                    />
-                  </div>
-                  <div className="flex items-end">
-                    <button
-                      onClick={() => removePart(index)}
-                      className="p-2 text-red-600 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors duration-200"
-                    >
-                      <SafeIcon icon={FiTrash2} />
-                    </button>
+                <div key={index} className="grid grid-cols-1 gap-4 p-4 bg-neutral-50 rounded-lg">
+                  <div className="grid grid-cols-1 md:grid-cols-6 gap-4">
+                    <div className="md:col-span-2">
+                      <label className="block text-sm text-neutral-500 mb-1">Description</label>
+                      <input
+                        type="text"
+                        value={part.description}
+                        onChange={(e) => updatePart(index, 'description', e.target.value)}
+                        className={inputClasses}
+                        placeholder="Part description"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm text-neutral-500 mb-1">Quantity</label>
+                      <input
+                        type="number"
+                        value={part.quantity}
+                        onChange={(e) => updatePart(index, 'quantity', e.target.value)}
+                        className={inputClasses}
+                        min="1"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm text-neutral-500 mb-1">Price ($)</label>
+                      <input
+                        type="number"
+                        value={part.price}
+                        onChange={(e) => updatePart(index, 'price', e.target.value)}
+                        className={inputClasses}
+                        min="0"
+                        step="0.01"
+                        disabled={part.isWarranty}
+                      />
+                    </div>
+                    <div className="flex flex-col">
+                      <label className="block text-sm text-neutral-500 mb-1">Warranty</label>
+                      <button
+                        type="button"
+                        onClick={() => togglePartWarranty(index)}
+                        className={`flex items-center justify-center px-3 py-2 rounded-lg text-sm font-medium transition-colors duration-200 ${
+                          part.isWarranty 
+                            ? 'bg-green-100 text-green-800 border-2 border-green-300' 
+                            : 'bg-neutral-100 text-neutral-700 border-2 border-neutral-300 hover:bg-neutral-200'
+                        }`}
+                      >
+                        <SafeIcon icon={FiShield} className="mr-2" />
+                        {part.isWarranty ? 'Warranty' : 'Regular'}
+                      </button>
+                    </div>
+                    <div className="flex items-end">
+                      <button
+                        onClick={() => removePart(index)}
+                        className="p-2 text-red-600 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors duration-200"
+                      >
+                        <SafeIcon icon={FiTrash2} />
+                      </button>
+                    </div>
                   </div>
                 </div>
               ))}
@@ -439,11 +485,23 @@ const ItemDetails = ({ onPrintReceipt }) => {
                 <div className="space-y-3">
                   {item.parts.map((part, index) => (
                     <div key={index} className="flex justify-between items-center p-3 bg-neutral-50 rounded-lg">
-                      <div>
-                        <p className="font-medium">{part.description}</p>
-                        <p className="text-sm text-neutral-600">Qty: {part.quantity} @ ${part.price.toFixed(2)} each</p>
+                      <div className="flex-1">
+                        <div className="flex items-center space-x-2">
+                          <p className="font-medium">{part.description}</p>
+                          {part.isWarranty && (
+                            <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                              <SafeIcon icon={FiShield} className="mr-1 text-xs" />
+                              Warranty
+                            </span>
+                          )}
+                        </div>
+                        <p className="text-sm text-neutral-600">
+                          Qty: {part.quantity} {part.isWarranty ? '(Under Warranty)' : `@ $${part.price.toFixed(2)} each`}
+                        </p>
                       </div>
-                      <p className="font-medium">${(part.quantity * part.price).toFixed(2)}</p>
+                      <p className="font-medium">
+                        {part.isWarranty ? 'Warranty' : `$${(part.quantity * part.price).toFixed(2)}`}
+                      </p>
                     </div>
                   ))}
                   <div className="border-t pt-3 mt-3">
@@ -478,46 +536,64 @@ const ItemDetails = ({ onPrintReceipt }) => {
           {isEditing ? (
             <div className="space-y-4">
               {editData.labor.map((laborItem, index) => (
-                <div key={index} className="grid grid-cols-1 md:grid-cols-5 gap-4 p-4 bg-neutral-50 rounded-lg">
-                  <div className="md:col-span-2">
-                    <label className="block text-sm text-neutral-500 mb-1">Service Description</label>
-                    <input
-                      type="text"
-                      value={laborItem.description}
-                      onChange={(e) => updateLabor(index, 'description', e.target.value)}
-                      className={inputClasses}
-                      placeholder="Service description"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm text-neutral-500 mb-1">Hours</label>
-                    <input
-                      type="number"
-                      value={laborItem.hours}
-                      onChange={(e) => updateLabor(index, 'hours', e.target.value)}
-                      className={inputClasses}
-                      min="0"
-                      step="0.25"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm text-neutral-500 mb-1">Rate ($/hr)</label>
-                    <input
-                      type="number"
-                      value={laborItem.rate}
-                      onChange={(e) => updateLabor(index, 'rate', e.target.value)}
-                      className={inputClasses}
-                      min="0"
-                      step="0.01"
-                    />
-                  </div>
-                  <div className="flex items-end">
-                    <button
-                      onClick={() => removeLabor(index)}
-                      className="p-2 text-red-600 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors duration-200"
-                    >
-                      <SafeIcon icon={FiTrash2} />
-                    </button>
+                <div key={index} className="grid grid-cols-1 gap-4 p-4 bg-neutral-50 rounded-lg">
+                  <div className="grid grid-cols-1 md:grid-cols-6 gap-4">
+                    <div className="md:col-span-2">
+                      <label className="block text-sm text-neutral-500 mb-1">Service Description</label>
+                      <input
+                        type="text"
+                        value={laborItem.description}
+                        onChange={(e) => updateLabor(index, 'description', e.target.value)}
+                        className={inputClasses}
+                        placeholder="Service description"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm text-neutral-500 mb-1">Hours</label>
+                      <input
+                        type="number"
+                        value={laborItem.hours}
+                        onChange={(e) => updateLabor(index, 'hours', e.target.value)}
+                        className={inputClasses}
+                        min="0"
+                        step="0.25"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm text-neutral-500 mb-1">Rate ($/hr)</label>
+                      <input
+                        type="number"
+                        value={laborItem.rate}
+                        onChange={(e) => updateLabor(index, 'rate', e.target.value)}
+                        className={inputClasses}
+                        min="0"
+                        step="0.01"
+                        disabled={laborItem.isWarranty}
+                      />
+                    </div>
+                    <div className="flex flex-col">
+                      <label className="block text-sm text-neutral-500 mb-1">Warranty</label>
+                      <button
+                        type="button"
+                        onClick={() => toggleLaborWarranty(index)}
+                        className={`flex items-center justify-center px-3 py-2 rounded-lg text-sm font-medium transition-colors duration-200 ${
+                          laborItem.isWarranty 
+                            ? 'bg-green-100 text-green-800 border-2 border-green-300' 
+                            : 'bg-neutral-100 text-neutral-700 border-2 border-neutral-300 hover:bg-neutral-200'
+                        }`}
+                      >
+                        <SafeIcon icon={FiShield} className="mr-2" />
+                        {laborItem.isWarranty ? 'Warranty' : 'Regular'}
+                      </button>
+                    </div>
+                    <div className="flex items-end">
+                      <button
+                        onClick={() => removeLabor(index)}
+                        className="p-2 text-red-600 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors duration-200"
+                      >
+                        <SafeIcon icon={FiTrash2} />
+                      </button>
+                    </div>
                   </div>
                 </div>
               ))}
@@ -541,11 +617,23 @@ const ItemDetails = ({ onPrintReceipt }) => {
                 <div className="space-y-3">
                   {item.labor.map((laborItem, index) => (
                     <div key={index} className="flex justify-between items-center p-3 bg-neutral-50 rounded-lg">
-                      <div>
-                        <p className="font-medium">{laborItem.description}</p>
-                        <p className="text-sm text-neutral-600">{laborItem.hours} hours @ ${laborItem.rate.toFixed(2)}/hr</p>
+                      <div className="flex-1">
+                        <div className="flex items-center space-x-2">
+                          <p className="font-medium">{laborItem.description}</p>
+                          {laborItem.isWarranty && (
+                            <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                              <SafeIcon icon={FiShield} className="mr-1 text-xs" />
+                              Warranty
+                            </span>
+                          )}
+                        </div>
+                        <p className="text-sm text-neutral-600">
+                          {laborItem.hours} hours {laborItem.isWarranty ? '(Under Warranty)' : `@ $${laborItem.rate.toFixed(2)}/hr`}
+                        </p>
                       </div>
-                      <p className="font-medium">${(laborItem.hours * laborItem.rate).toFixed(2)}</p>
+                      <p className="font-medium">
+                        {laborItem.isWarranty ? 'Warranty' : `$${(laborItem.hours * laborItem.rate).toFixed(2)}`}
+                      </p>
                     </div>
                   ))}
                   <div className="border-t pt-3 mt-3 space-y-2">

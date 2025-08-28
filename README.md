@@ -1,81 +1,8 @@
 # ServiceTracker
 
-A modern service order management system built with React, Supabase, and Tailwind CSS.
+A modern service order management system built with React and Tailwind CSS. All data is stored locally in your browser using localStorage.
 
-## Database Setup
-
-To fix the "invalid input syntax for type uuid" error, you need to create the correct database schema in Supabase:
-
-### 1. Go to Supabase Dashboard
-- Open your project at https://supabase.com/dashboard
-- Navigate to the SQL Editor
-
-### 2. Run this SQL to create the correct schema:
-
-```sql
--- Drop existing tables completely
-DROP TABLE IF EXISTS status_history_public_st847291 CASCADE;
-DROP TABLE IF EXISTS service_orders_public_st847291 CASCADE;
-
--- Create service orders table with TEXT id (not UUID)
-CREATE TABLE service_orders_public_st847291 (
-  id TEXT PRIMARY KEY,
-  customer_name TEXT NOT NULL,
-  customer_phone TEXT NOT NULL,
-  customer_email TEXT,
-  company TEXT,
-  item_type TEXT NOT NULL,
-  quantity INTEGER NOT NULL DEFAULT 1,
-  description TEXT NOT NULL,
-  urgency TEXT DEFAULT 'normal',
-  expected_completion DATE,
-  status TEXT NOT NULL DEFAULT 'received',
-  parts JSONB DEFAULT '[]'::jsonb,
-  labor JSONB DEFAULT '[]'::jsonb,
-  parts_total NUMERIC(10,2) DEFAULT 0,
-  labor_total NUMERIC(10,2) DEFAULT 0,
-  tax_rate NUMERIC(5,2) DEFAULT 0,
-  tax NUMERIC(10,2) DEFAULT 0,
-  subtotal NUMERIC(10,2) DEFAULT 0,
-  total NUMERIC(10,2) DEFAULT 0,
-  archived_at TIMESTAMP WITH TIME ZONE,
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT now(),
-  updated_at TIMESTAMP WITH TIME ZONE DEFAULT now()
-);
-
--- Enable RLS and create policies
-ALTER TABLE service_orders_public_st847291 ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "Allow all operations on service orders" ON service_orders_public_st847291
-FOR ALL USING (true) WITH CHECK (true);
-
--- Create status history table with TEXT foreign key
-CREATE TABLE status_history_public_st847291 (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  service_order_id TEXT NOT NULL REFERENCES service_orders_public_st847291(id) ON DELETE CASCADE,
-  status TEXT NOT NULL,
-  notes TEXT,
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT now()
-);
-
--- Enable RLS and create policies for status history
-ALTER TABLE status_history_public_st847291 ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "Allow all operations on status history" ON status_history_public_st847291
-FOR ALL USING (true) WITH CHECK (true);
-
--- Create indexes for performance
-CREATE INDEX idx_service_orders_status ON service_orders_public_st847291(status);
-CREATE INDEX idx_service_orders_created_at ON service_orders_public_st847291(created_at);
-CREATE INDEX idx_service_orders_archived_at ON service_orders_public_st847291(archived_at);
-CREATE INDEX idx_status_history_service_order_id ON status_history_public_st847291(service_order_id);
-CREATE INDEX idx_status_history_created_at ON status_history_public_st847291(created_at);
-```
-
-### 3. After running the SQL:
-- Refresh your app
-- The order IDs will now work correctly as TEXT instead of UUID
-- You can create service orders with IDs like "247", "762", etc.
-
-## Key Features
+## Features
 
 - **Random Order IDs**: Simple 3-digit numbers (101-999) instead of complex UUIDs
 - **Service Order Management**: Create, track, and manage service orders
@@ -83,20 +10,116 @@ CREATE INDEX idx_status_history_created_at ON status_history_public_st847291(cre
 - **Parts & Labor**: Add parts and labor costs with automatic calculations
 - **Print Receipts**: Professional receipt printing
 - **Archive System**: Archive completed orders
+- **Local Storage**: All data stored locally in your browser
+- **Export/Import**: Backup and restore your data
 - **Responsive Design**: Works on desktop and mobile
 
-## Development
+## Getting Started
 
 ```bash
 npm install
 npm run dev
 ```
 
-## Database Schema
+The app will be available at `http://localhost:5173`
 
-The key change is using `TEXT` for the `id` field instead of `UUID`:
+## Data Storage
 
-- `service_orders_public_st847291.id` → TEXT PRIMARY KEY
-- `status_history_public_st847291.service_order_id` → TEXT (references service_orders.id)
+This application uses **localStorage** to store all data locally in your browser:
 
-This allows the app to use simple numeric IDs like "247" instead of complex UUIDs.
+- **Active Orders**: Stored in `serviceTracker_activeOrders`
+- **Archived Orders**: Stored in `serviceTracker_archivedOrders`
+- **Used Order IDs**: Stored in `serviceTracker_usedOrderIds`
+
+### Data Persistence
+
+- Data persists between browser sessions
+- Clearing browser data will remove all service orders
+- Use the export/import feature in Settings to backup your data
+- Data is not synced between different browsers or devices
+
+## Key Features
+
+### Order ID System
+- Uses simple 3-digit IDs (101-999)
+- Randomly generated to avoid sequential patterns
+- Automatically tracks used IDs to prevent duplicates
+
+### Status Management
+- **Received**: New orders just logged into the system
+- **Needs Quote**: Items requiring price estimation
+- **In Progress**: Active repair work
+- **Waiting on Parts**: Delayed due to parts availability
+- **Quote Approval**: Awaiting customer approval for repairs
+- **Ready**: Completed and ready for pickup/delivery
+- **Completed**: Finished orders
+- **Archived**: Long-term storage for completed orders
+
+### Parts & Labor Tracking
+- Add multiple parts with quantities and prices
+- Track labor hours and rates
+- Automatic tax calculations
+- Warranty support (parts/labor marked as warranty don't count toward totals)
+
+### Receipt Printing
+- Professional printable receipts
+- Includes all service details, parts, labor, and totals
+- Quote approval forms for customer signatures
+
+## Data Management
+
+### Export Data
+- Download all service orders as JSON
+- Option to include or exclude archived orders
+- Preserves all data including status history
+
+### Import Data
+- Restore from previously exported JSON files
+- Merges with existing data
+- Updates existing orders and adds new ones
+- Preserves order IDs and status history
+
+### Clear Data
+- Reset the entire application
+- Removes all orders and resets order ID counter
+- Cannot be undone - use export first for backup
+
+## Development
+
+### Project Structure
+```
+src/
+├── components/          # Reusable UI components
+├── pages/              # Main application pages
+├── hooks/              # Custom React hooks
+├── utils/              # Utility functions
+└── common/             # Common components (SafeIcon)
+```
+
+### Key Files
+- `src/hooks/useServiceOrders.js`: Main data management logic
+- `src/utils/orderIdGenerator.js`: Order ID generation system
+- `src/pages/Settings.jsx`: Data export/import functionality
+
+## Browser Compatibility
+
+Works in all modern browsers that support:
+- localStorage
+- ES6 features
+- CSS Grid and Flexbox
+
+## Limitations
+
+- Data is not synchronized between devices
+- Storage limited by browser localStorage limits (typically 5-10MB)
+- No user authentication or multi-user support
+- No real-time collaboration features
+
+## Future Enhancements
+
+Potential features for future versions:
+- Cloud storage integration
+- Multi-user support
+- Real-time synchronization
+- Mobile app
+- Advanced reporting and analytics

@@ -31,8 +31,7 @@ function App() {
     <Router>
       <div className="min-h-screen bg-neutral-200">
         <Navbar />
-        <motion.main
-          className="pt-16"
+        <motion.main className="pt-16" 
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ duration: 0.3 }}

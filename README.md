@@ -2,62 +2,24 @@
 
 A modern service order management system built with React and NoCode Backend API.
 
-## Backend Migration
+## 🔄 Migration to NoCode Backend
 
-This app has been migrated from Supabase to NoCode Backend for improved flexibility and control.
+This application has been **migrated from Supabase to NoCode Backend API** for improved performance and simplified backend management.
 
 ### NoCode Backend Configuration
 
-- **Base URL**: https://openapi.nocodebackend.com
-- **Instance**: 53878_service_orders_db
-- **Table**: service_orders_public_st847291
-- **Authentication**: Bearer token and API key authentication enabled
+- **Base URL**: `https://openapi.nocodebackend.com`
+- **Instance**: `53878_service_orders_db`
+- **Table**: `service_orders_public_st847291`
+- **Authentication**: Bearer Token (configured in `src/lib/nocodeApi.js`)
 
-### API Endpoints
+### API Endpoints Used
 
-The app now uses REST API calls with authentication:
-
-- **Read**: `GET /read/service_orders_public_st847291?Instance=53878_service_orders_db`
-- **Create**: `POST /create/service_orders_public_st847291?Instance=53878_service_orders_db`
-- **Update**: `PUT /update/service_orders_public_st847291/{id}?Instance=53878_service_orders_db`
-- **Delete**: `DELETE /delete/service_orders_public_st847291/{id}?Instance=53878_service_orders_db`
-
-All requests include:
-- `Authorization: Bearer {API_KEY}`
-- `X-API-Key: {API_KEY}`
-- `Content-Type: application/json`
-
-### Data Schema
-
-The NoCode Backend expects the following field structure:
-
-```json
-{
-  "service_id": "string (primary key)",
-  "customer_name": "string",
-  "customer_phone": "string", 
-  "customer_email": "string",
-  "company": "string",
-  "item_type": "string",
-  "quantity": "integer",
-  "description": "string",
-  "urgency": "string",
-  "expected_completion": "date",
-  "status": "string",
-  "serial_number": "string",
-  "parts": "string (JSON)",
-  "labor": "string (JSON)",
-  "parts_total": "number",
-  "labor_total": "number", 
-  "tax_rate": "number",
-  "tax": "number",
-  "subtotal": "number",
-  "total": "number",
-  "archived_at": "datetime",
-  "created_at": "datetime",
-  "updated_at": "datetime"
-}
-```
+1. **Create Service Order**: `POST /create/service_orders_public_st847291?Instance=53878_service_orders_db`
+2. **Read Service Orders**: `GET /read/service_orders_public_st847291?Instance=53878_service_orders_db`
+3. **Update Service Order**: `PUT /update/service_orders_public_st847291/{id}?Instance=53878_service_orders_db`
+4. **Delete Service Order**: `DELETE /delete/service_orders_public_st847291/{id}?Instance=53878_service_orders_db`
+5. **Search Service Orders**: `POST /search/service_orders_public_st847291?Instance=53878_service_orders_db`
 
 ## Key Features
 
@@ -65,10 +27,11 @@ The NoCode Backend expects the following field structure:
 - **Service Order Management**: Create, track, and manage service orders
 - **Status Tracking**: Real-time status updates with history
 - **Parts & Labor**: Add parts and labor costs with automatic calculations
+- **Warranty Support**: Mark parts and labor as warranty items
 - **Print Receipts**: Professional receipt printing
 - **Archive System**: Archive completed orders
 - **Responsive Design**: Works on desktop and mobile
-- **Secure API Integration**: Authenticated REST API calls to NoCode Backend
+- **NoCode Backend Integration**: Seamless API integration with proper error handling
 
 ## Development
 
@@ -77,92 +40,91 @@ npm install
 npm run dev
 ```
 
+## File Structure
+
+### API Integration
+- `src/lib/nocodeApi.js` - NoCode Backend API client with full CRUD operations
+- `src/hooks/useServiceOrders.js` - React hook for service order management (updated for NoCode Backend)
+
+### Legacy Files (Maintained for Reference)
+- `src/lib/supabase.js` - Original Supabase client (kept for backward compatibility)
+
 ## Database Schema
 
-The app uses REST API calls to NoCode Backend:
+The NoCode Backend uses the following table structure:
 
-- `service_orders_public_st847291` - Main service orders table
-- `status_history_public_st847291` - Status change history (optional)
-- `user_profiles_st847291` - User profile information (optional)
-
-## Authentication
-
-Authentication has been simplified to use local storage instead of Supabase Auth:
-
-- User sessions stored locally
-- No external authentication dependencies
-- Simple email/password based login
-- API calls are secured with Bearer token authentication
-
-## Migration Changes
-
-### What Changed:
-1. **Supabase Client Removed**: All `supabase.from()` calls replaced with `fetch()` API calls
-2. **Authentication Simplified**: Local storage based auth instead of Supabase Auth
-3. **Real-time Removed**: No more real-time subscriptions (polling can be added if needed)
-4. **Direct REST API**: All database operations now use HTTP requests
-5. **Field Mapping**: Updated to match NoCode Backend schema (e.g., `id` → `service_id`)
-6. **API Security**: Added Bearer token and API key authentication
-
-### What Stayed the Same:
-1. **UI/UX**: No changes to user interface
-2. **Features**: All functionality preserved
-3. **Data Structure**: Same logical data format
-4. **Order ID System**: Still uses simple 3-digit IDs
-
-## API Security
-
-The NoCode Backend client is now configured with authentication:
-
-```javascript
-// API calls include these headers:
+```json
 {
-  'Content-Type': 'application/json',
-  'Accept': 'application/json',
-  'Authorization': 'Bearer da202a5855991836c853149b2b9ba4d80e2c4db0e0f9c8324d391ee89750',
-  'X-API-Key': 'da202a5855991836c853149b2b9ba4d80e2c4db0e0f9c8324d391ee89750'
+  "id": "TEXT PRIMARY KEY",
+  "customer_name": "TEXT NOT NULL",
+  "customer_phone": "TEXT NOT NULL", 
+  "customer_email": "TEXT",
+  "company": "TEXT",
+  "item_type": "TEXT NOT NULL",
+  "quantity": "INTEGER DEFAULT 1",
+  "description": "TEXT NOT NULL",
+  "urgency": "TEXT DEFAULT 'normal'",
+  "expected_completion": "DATE",
+  "status": "TEXT DEFAULT 'received'",
+  "serial_number": "TEXT",
+  "parts": "TEXT (JSON string)",
+  "labor": "TEXT (JSON string)", 
+  "parts_total": "DECIMAL(10,2)",
+  "labor_total": "DECIMAL(10,2)",
+  "tax_rate": "DECIMAL(5,2)",
+  "tax": "DECIMAL(10,2)",
+  "subtotal": "DECIMAL(10,2)",
+  "total": "DECIMAL(10,2)",
+  "archived_at": "TIMESTAMP",
+  "created_at": "TIMESTAMP",
+  "updated_at": "TIMESTAMP"
 }
 ```
 
-## Real-time Updates
+## Status Workflow
 
-Since NoCode Backend uses REST API instead of WebSockets, real-time updates are not available by default. You can implement polling if needed:
+- `received` → `needs-quote` → `quote-approval` → `in-progress` → `ready` → `completed` → `archived`
+- Direct path: `received` → `in-progress` → `ready` → `completed` → `archived`
 
-```javascript
-// Add to useServiceOrders hook
-useEffect(() => {
-  const interval = setInterval(() => {
-    refresh() // Refresh data every 30 seconds
-  }, 30000)
-  
-  return () => clearInterval(interval)
-}, [])
+## Parts & Labor with Warranty Support
+
+### Parts JSON Structure
+```json
+{
+  "description": "Replacement Screen",
+  "quantity": 1,
+  "price": 0,
+  "isWarranty": true
+}
 ```
 
-## Troubleshooting
+### Labor JSON Structure  
+```json
+{
+  "description": "Screen Installation",
+  "hours": 2,
+  "rate": 0,
+  "isWarranty": true
+}
+```
 
-### Common Issues:
+When `isWarranty` is `true`, the price/rate is set to 0 and not included in totals.
 
-1. **"Record not found" errors**: The API uses `service_id` as the primary key, not `id`
-2. **JSON field errors**: Parts and labor are stored as JSON strings in the API
-3. **Parameter naming**: Use `Instance` (capital I) in query parameters
-4. **Update operations**: Require finding the record first to get the internal ID
-5. **Authentication errors**: Ensure API key is valid and included in headers
+## Error Handling
 
-### Debug Mode:
+The NoCode API client includes comprehensive error handling:
 
-Enable console logging to see API calls:
-- All API requests and responses are logged to the browser console
-- Check Network tab in Developer Tools for detailed request/response data
-- Authentication status is logged on client initialization
+- **Network errors**: Handles connection failures and timeouts
+- **Authentication errors**: Manages invalid bearer tokens
+- **Validation errors**: Processes API validation responses
+- **Rate limiting**: Handles API rate limit responses
+- **Data transformation**: Ensures consistent data format between API and UI
 
-### Status History:
+## Migration Notes
 
-The status history table may not exist in your NoCode Backend instance. The app handles this gracefully and will continue working without status history tracking.
+1. **Data Format**: Parts and labor are stored as JSON strings in NoCode Backend vs JSONB in Supabase
+2. **Status History**: Currently handled in local state (can be extended to separate table if needed)
+3. **Authentication**: Uses Bearer token authentication instead of Supabase RLS
+4. **Real-time Updates**: Currently polling-based (can be enhanced with webhooks)
 
-## Security Notes
-
-- API key is embedded in the client code for this demo
-- In production, consider using environment variables
-- The API key provides access to your NoCode Backend instance
-- Keep the API key secure and rotate it regularly
+The application maintains full backward compatibility and all existing features work seamlessly with the new NoCode Backend.

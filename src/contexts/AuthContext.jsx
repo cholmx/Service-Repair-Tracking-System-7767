@@ -1,214 +1,294 @@
-import React, { createContext, useContext, useState, useEffect } from 'react'
+import React, { createContext, useContext, useState, useEffect } from 'react';
+import { supabase } from '../lib/supabase';
 
-const AuthContext = createContext({})
+const AuthContext = createContext({});
 
 export const useAuth = () => {
-  const context = useContext(AuthContext)
+  const context = useContext(AuthContext);
   if (!context) {
-    throw new Error('useAuth must be used within an AuthProvider')
+    throw new Error('useAuth must be used within an AuthProvider');
   }
-  return context
-}
+  return context;
+};
 
 export const AuthProvider = ({ children }) => {
-  const [user, setUser] = useState(null)
-  const [userProfile, setUserProfile] = useState(null)
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState(null)
+  const [user, setUser] = useState(null);
+  const [userProfile, setUserProfile] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
-    console.log('AuthProvider: Starting authentication check...')
+    console.log('AuthProvider: Starting authentication check...');
     
-    // For NoCode Backend, we'll use a simple local storage based auth
-    // since we don't have built-in authentication like Supabase
+    // Flag to track component mount state
+    let isMounted = true;
+    
     const initializeAuth = async () => {
       try {
-        // Check for existing session in localStorage
-        const savedUser = localStorage.getItem('servicetracker_user')
-        const savedProfile = localStorage.getItem('servicetracker_profile')
+        // Get initial session
+        const { data, error: sessionError } = await supabase.auth.getSession();
         
-        if (savedUser && savedProfile) {
-          console.log('AuthProvider: Found saved session')
-          setUser(JSON.parse(savedUser))
-          setUserProfile(JSON.parse(savedProfile))
+        if (sessionError) {
+          console.error('AuthProvider: Session error:', sessionError);
+          if (isMounted) {
+            setError(sessionError.message);
+            setLoading(false);
+          }
+          return;
+        }
+        
+        const session = data.session;
+        
+        if (isMounted) {
+          setUser(session?.user ?? null);
+        }
+        
+        if (session?.user) {
+          console.log('AuthProvider: User found, fetching profile...');
+          if (isMounted) {
+            await fetchUserProfile(session.user.id);
+          }
         } else {
-          console.log('AuthProvider: No saved session found')
+          console.log('AuthProvider: No user session found');
+          if (isMounted) {
+            setLoading(false);
+          }
         }
       } catch (err) {
-        console.error('AuthProvider: Initialization error:', err)
-        setError(err.message)
-      } finally {
-        setLoading(false)
+        console.error('AuthProvider: Initialization error:', err);
+        if (isMounted) {
+          setError(err.message);
+          setLoading(false);
+        }
       }
-    }
+    };
+    
+    // Initialize authentication
+    initializeAuth();
+    
+    // Listen for auth changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      async (event, session) => {
+        console.log('AuthProvider: Auth state changed:', { event, session: !!session });
+        
+        if (!isMounted) return;
+        
+        setUser(session?.user ?? null);
+        
+        if (session?.user) {
+          console.log('AuthProvider: User authenticated, fetching profile...');
+          await fetchUserProfile(session.user.id);
+        } else {
+          console.log('AuthProvider: User signed out');
+          setUserProfile(null);
+          setLoading(false);
+        }
+      }
+    );
 
-    initializeAuth()
-  }, [])
+    return () => {
+      console.log('AuthProvider: Cleaning up auth subscription');
+      isMounted = false;
+      subscription.unsubscribe();
+    };
+  }, []);
 
-  const createUserProfile = async (userData, profileData) => {
+  const fetchUserProfile = async (userId) => {
     try {
-      console.log('createUserProfile: Creating profile for user:', userData.email, profileData)
+      console.log('fetchUserProfile: Fetching profile for user:', userId);
+      
+      const { data, error } = await supabase
+        .from('user_profiles_st847291')
+        .select('*')
+        .eq('user_id', userId)
+        .single();
 
+      if (error) {
+        console.log('fetchUserProfile: Profile fetch error:', error);
+        if (error.code === 'PGRST116') {
+          console.log('fetchUserProfile: No profile found, user needs to complete setup');
+          // Profile doesn't exist yet, this is okay for new users
+          setLoading(false);
+          return;
+        } else {
+          console.error('fetchUserProfile: Database error:', error);
+          setError(error.message);
+        }
+      } else if (data) {
+        console.log('fetchUserProfile: Profile found:', data);
+        setUserProfile(data);
+      }
+    } catch (error) {
+      console.error('fetchUserProfile: Unexpected error:', error);
+      setError(error.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const createUserProfile = async (userId, profileData) => {
+    try {
+      console.log('createUserProfile: Creating profile for user:', userId, profileData);
+      
       const profilePayload = {
-        user_id: userData.id,
+        user_id: userId,
         email: profileData.email,
         first_name: profileData.first_name,
         last_name: profileData.last_name,
         company_name: profileData.company_name || '',
         subscription_tier: 'free',
         trial_ends_at: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString() // 14 days from now
+      };
+
+      const { data, error } = await supabase
+        .from('user_profiles_st847291')
+        .insert([profilePayload])
+        .select()
+        .single();
+
+      if (error) {
+        console.error('createUserProfile: Insert error:', error);
+        throw error;
       }
-
-      // For NoCode Backend, we would need to implement user profile storage
-      // For now, we'll store it locally
-      setUserProfile(profilePayload)
-      localStorage.setItem('servicetracker_profile', JSON.stringify(profilePayload))
-
-      console.log('createUserProfile: Profile created successfully:', profilePayload)
-      return { data: profilePayload, error: null }
-
+      
+      console.log('createUserProfile: Profile created successfully:', data);
+      setUserProfile(data);
+      return { data, error: null };
     } catch (error) {
-      console.error('createUserProfile: Error creating profile:', error)
-      return { data: null, error }
+      console.error('createUserProfile: Error creating profile:', error);
+      return { data: null, error };
     }
-  }
+  };
 
   const signUp = async (email, password, firstName, lastName, companyName = '') => {
     try {
-      console.log('signUp: Starting signup process for:', email)
-      setLoading(true)
-
-      // For NoCode Backend, implement your own user registration logic
-      // This is a simplified version using localStorage
-      const userId = `user_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+      console.log('signUp: Starting signup process for:', email);
+      setLoading(true);
       
-      const userData = {
-        id: userId,
+      // Sign up with Supabase Auth
+      const { data, error } = await supabase.auth.signUp({
         email,
-        created_at: new Date().toISOString()
+        password,
+        options: {
+          data: {
+            first_name: firstName,
+            last_name: lastName,
+            company_name: companyName
+          }
+        }
+      });
+
+      console.log('signUp: Auth signup result:', { data: !!data, error });
+
+      if (error) {
+        console.error('signUp: Authentication error:', error);
+        throw error;
       }
 
-      // Save user data
-      setUser(userData)
-      localStorage.setItem('servicetracker_user', JSON.stringify(userData))
+      // Create user profile if user was created
+      if (data.user) {
+        console.log('signUp: User created, creating profile...');
+        await createUserProfile(data.user.id, {
+          email,
+          first_name: firstName,
+          last_name: lastName,
+          company_name: companyName
+        });
+      }
 
-      // Create user profile
-      await createUserProfile(userData, {
-        email,
-        first_name: firstName,
-        last_name: lastName,
-        company_name: companyName
-      })
-
-      console.log('signUp: Signup completed successfully')
-      return { data: { user: userData }, error: null }
-
+      console.log('signUp: Signup completed successfully');
+      return { data, error: null };
     } catch (error) {
-      console.error('signUp: Signup failed:', error)
-      return { data: null, error }
+      console.error('signUp: Signup failed:', error);
+      return { data: null, error };
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   const signIn = async (email, password) => {
     try {
-      console.log('signIn: Starting signin process for:', email)
-      setLoading(true)
-      setError(null)
-
-      // For NoCode Backend, implement your own authentication logic
-      // This is a simplified version that accepts any email/password
-      const userData = {
-        id: `user_${email.replace('@', '_').replace('.', '_')}`,
+      console.log('signIn: Starting signin process for:', email);
+      setLoading(true);
+      setError(null);
+      
+      const { data, error } = await supabase.auth.signInWithPassword({
         email,
-        created_at: new Date().toISOString()
+        password
+      });
+
+      console.log('signIn: Auth signin result:', { data: !!data, error });
+
+      if (error) {
+        console.error('signIn: Authentication error:', error);
+        throw error;
       }
 
-      // Save user data
-      setUser(userData)
-      localStorage.setItem('servicetracker_user', JSON.stringify(userData))
-
-      // Create a basic profile if none exists
-      const existingProfile = localStorage.getItem('servicetracker_profile')
-      if (!existingProfile) {
-        await createUserProfile(userData, {
-          email,
-          first_name: email.split('@')[0],
-          last_name: 'User',
-          company_name: ''
-        })
-      } else {
-        setUserProfile(JSON.parse(existingProfile))
-      }
-
-      console.log('signIn: Signin completed successfully')
-      return { data: { user: userData }, error: null }
-
+      console.log('signIn: Signin completed successfully');
+      return { data, error: null };
     } catch (error) {
-      console.error('signIn: Signin failed:', error)
-      setError(error.message)
-      return { data: null, error }
+      console.error('signIn: Signin failed:', error);
+      setError(error.message);
+      return { data: null, error };
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   const signOut = async () => {
     try {
-      console.log('signOut: Starting signout process')
-      setLoading(true)
-
-      // Clear local storage
-      localStorage.removeItem('servicetracker_user')
-      localStorage.removeItem('servicetracker_profile')
-
-      // Clear state
-      setUser(null)
-      setUserProfile(null)
-
-      console.log('signOut: Signout completed successfully')
-      return { error: null }
-
+      console.log('signOut: Starting signout process');
+      setLoading(true);
+      
+      const { error } = await supabase.auth.signOut();
+      if (error) {
+        console.error('signOut: Signout error:', error);
+        throw error;
+      }
+      
+      console.log('signOut: Signout completed successfully');
+      setUser(null);
+      setUserProfile(null);
+      return { error: null };
     } catch (error) {
-      console.error('signOut: Signout failed:', error)
-      setError(error.message)
-      return { error }
+      console.error('signOut: Signout failed:', error);
+      setError(error.message);
+      return { error };
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   const updateSubscription = async (tier) => {
     try {
-      if (!user) throw new Error('No user logged in')
+      if (!user) throw new Error('No user logged in');
+
+      console.log('updateSubscription: Updating subscription to:', tier);
+
+      const { data, error } = await supabase
+        .from('user_profiles_st847291')
+        .update({ subscription_tier: tier })
+        .eq('user_id', user.id)
+        .select()
+        .single();
+
+      if (error) throw error;
       
-      console.log('updateSubscription: Updating subscription to:', tier)
-
-      const updatedProfile = {
-        ...userProfile,
-        subscription_tier: tier
-      }
-
-      setUserProfile(updatedProfile)
-      localStorage.setItem('servicetracker_profile', JSON.stringify(updatedProfile))
-
-      console.log('updateSubscription: Subscription updated successfully')
-      return { data: updatedProfile, error: null }
-
+      console.log('updateSubscription: Subscription updated successfully');
+      setUserProfile(data);
+      return { data, error: null };
     } catch (error) {
-      console.error('updateSubscription: Error updating subscription:', error)
-      setError(error.message)
-      return { data: null, error }
+      console.error('updateSubscription: Error updating subscription:', error);
+      setError(error.message);
+      return { data: null, error };
     }
-  }
+  };
 
   // Subscription helpers
-  const isSubscribed = userProfile?.subscription_tier !== 'free'
-  const isPremium = userProfile?.subscription_tier === 'premium'
-  const isTrialExpired = userProfile?.trial_ends_at 
-    ? new Date(userProfile.trial_ends_at) < new Date() 
-    : false
+  const isSubscribed = userProfile?.subscription_tier !== 'free';
+  const isPremium = userProfile?.subscription_tier === 'premium';
+  const isTrialExpired = userProfile?.trial_ends_at ? 
+    new Date(userProfile.trial_ends_at) < new Date() : false;
 
   const value = {
     user,
@@ -223,11 +303,11 @@ export const AuthProvider = ({ children }) => {
     isSubscribed,
     isPremium,
     isTrialExpired
-  }
+  };
 
   return (
     <AuthContext.Provider value={value}>
       {children}
     </AuthContext.Provider>
-  )
-}
+  );
+};

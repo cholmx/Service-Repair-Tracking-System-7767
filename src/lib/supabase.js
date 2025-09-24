@@ -26,7 +26,10 @@ const ensureTablesExist = async () => {
     console.log('Ensuring database tables exist...')
     
     // Try to create tables if they don't exist
-    const { error } = await supabaseClient.from('service_orders_public_st847291').select('id').limit(1)
+    const { error } = await supabaseClient
+      .from('service_orders_public_st847291')
+      .select('id')
+      .limit(1)
     
     if (error && error.code === 'PGRST204') {
       console.log('Tables do not exist, they need to be created manually in Supabase dashboard')
@@ -50,6 +53,11 @@ console.log('Supabase client initialized:', {
   keyLength: SUPABASE_ANON_KEY.length,
   connected: true
 })
+
+// NOTE: This Supabase client is kept for backward compatibility
+// The main application now uses NoCode Backend API
+console.warn('⚠️ Application has been migrated to NoCode Backend API')
+console.log('🔄 Supabase client is maintained for fallback purposes only')
 
 export default supabaseClient
 export const supabase = supabaseClient

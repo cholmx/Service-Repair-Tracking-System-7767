@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import noCodeApi from '../lib/nocodeApi'
 import orderIdGenerator from '../utils/orderIdGenerator'
 
-export const useServiceOrders = () => {
+export const useServiceOrdersNoCode = () => {
   const [items, setItems] = useState([])
   const [archivedItems, setArchivedItems] = useState([])
   const [loading, setLoading] = useState(true)
@@ -36,9 +36,7 @@ export const useServiceOrders = () => {
       console.log('Loading service orders from NoCode Backend...')
 
       // Load active service orders (not archived)
-      const { data: activeOrders, error: activeError } = await noCodeApi.getServiceOrders({
-        'archived_at': null
-      })
+      const { data: activeOrders, error: activeError } = await noCodeApi.getActiveServiceOrders()
       
       if (activeError) {
         console.error('Active orders error:', activeError)
@@ -46,9 +44,7 @@ export const useServiceOrders = () => {
       }
 
       // Load archived service orders
-      const { data: archivedOrders, error: archivedError } = await noCodeApi.getServiceOrders({
-        'archived_at[ne]': null
-      })
+      const { data: archivedOrders, error: archivedError } = await noCodeApi.getArchivedServiceOrders()
       
       if (archivedError) {
         console.error('Archived orders error:', archivedError)
@@ -65,15 +61,12 @@ export const useServiceOrders = () => {
         statusHistory: []
       })
 
-      const transformedActive = (activeOrders || []).map(transformOrder)
-      const transformedArchived = (archivedOrders || []).map(transformOrder)
-
-      setItems(transformedActive)
-      setArchivedItems(transformedArchived)
+      setItems(activeOrders ? activeOrders.map(transformOrder) : [])
+      setArchivedItems(archivedOrders ? archivedOrders.map(transformOrder) : [])
 
       console.log('Service orders loaded successfully:', {
-        active: transformedActive.length,
-        archived: transformedArchived.length
+        active: activeOrders?.length || 0,
+        archived: archivedOrders?.length || 0
       })
 
     } catch (err) {
@@ -113,15 +106,17 @@ export const useServiceOrders = () => {
           urgency: formData.urgency,
           expected_completion: formData.expectedCompletion || null,
           status: initialStatus,
-          parts: JSON.stringify([]),
-          labor: JSON.stringify([]),
+          parts: [],
+          labor: [],
           parts_total: 0,
           labor_total: 0,
           tax_rate: 0,
           tax: 0,
           subtotal: 0,
           total: 0,
-          archived_at: null
+          archived_at: null,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
         }
 
         // Insert service order
@@ -134,10 +129,6 @@ export const useServiceOrders = () => {
 
         const transformedOrder = {
           ...orderData,
-          parts: [],
-          labor: [],
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
           statusHistory: [{
             service_order_id: orderId,
             status: initialStatus,
@@ -179,14 +170,6 @@ export const useServiceOrders = () => {
       const statusNotes = updateData.statusNotes
       delete updateData.statusNotes
 
-      // Ensure parts and labor are JSON strings for the API
-      if (updateData.parts && Array.isArray(updateData.parts)) {
-        updateData.parts = JSON.stringify(updateData.parts)
-      }
-      if (updateData.labor && Array.isArray(updateData.labor)) {
-        updateData.labor = JSON.stringify(updateData.labor)
-      }
-
       // Update the service order
       const { data: updatedOrder, error: updateError } = await noCodeApi.updateServiceOrder(id, updateData)
 
@@ -198,15 +181,7 @@ export const useServiceOrders = () => {
       // Update local state for active items
       setItems(prev => prev.map(item => {
         if (item.id === id) {
-          const updated = { ...item, ...updates }
-          
-          // Ensure parts and labor are arrays in local state
-          if (updates.parts && typeof updates.parts === 'string') {
-            updated.parts = JSON.parse(updates.parts)
-          }
-          if (updates.labor && typeof updates.labor === 'string') {
-            updated.labor = JSON.parse(updates.labor)
-          }
+          const updated = { ...item, ...updateData }
           
           // Add status history entry locally (since we don't have the table yet)
           if (updates.status) {
@@ -229,15 +204,7 @@ export const useServiceOrders = () => {
       // Update local state for archived items
       setArchivedItems(prev => prev.map(item => {
         if (item.id === id) {
-          const updated = { ...item, ...updates }
-          
-          // Ensure parts and labor are arrays in local state
-          if (updates.parts && typeof updates.parts === 'string') {
-            updated.parts = JSON.parse(updates.parts)
-          }
-          if (updates.labor && typeof updates.labor === 'string') {
-            updated.labor = JSON.parse(updates.labor)
-          }
+          const updated = { ...item, ...updateData }
           
           if (updates.status) {
             updated.statusHistory = [

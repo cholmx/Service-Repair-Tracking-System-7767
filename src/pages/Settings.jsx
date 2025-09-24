@@ -3,11 +3,14 @@ import { motion } from 'framer-motion'
 import * as FiIcons from 'react-icons/fi'
 import SafeIcon from '../common/SafeIcon'
 import { useServiceOrders } from '../hooks/useServiceOrders'
+import nocodeBackend from '../lib/nocodeBackend'
+import { useAuth } from '../contexts/AuthContext'
 
-const { FiDownload, FiUpload, FiDatabase, FiCheck, FiAlertCircle, FiInfo, FiTrash2 } = FiIcons
+const { FiDownload, FiUpload, FiSettings, FiArchive, FiCheck, FiAlertCircle, FiInfo, FiDatabase } = FiIcons
 
 const Settings = () => {
   const { items, archivedItems, refresh } = useServiceOrders()
+  const { user } = useAuth()
   const [loading, setLoading] = useState(false)
   const [message, setMessage] = useState({ type: '', text: '' })
   const [exportIncludeArchived, setExportIncludeArchived] = useState(true)
@@ -33,9 +36,9 @@ const Settings = () => {
 
       // Add metadata
       const exportData = {
-        version: "2.0",
+        version: "1.0",
         exportDate: new Date().toISOString(),
-        exportedBy: "local-user",
+        exportedBy: user ? user.email : "anonymous",
         recordCount: dataToExport.length,
         includesArchived: exportIncludeArchived,
         data: dataToExport
@@ -60,6 +63,7 @@ const Settings = () => {
         type: 'success',
         text: `Successfully exported ${dataToExport.length} service orders`
       })
+
     } catch (error) {
       console.error('Export error:', error)
       setMessage({
@@ -99,91 +103,126 @@ const Settings = () => {
             throw new Error('Invalid import file format')
           }
 
-          // Get current data
-          const currentActiveData = localStorage.getItem('serviceTracker_activeOrders')
-          const currentArchivedData = localStorage.getItem('serviceTracker_archivedOrders')
-          
-          const currentActive = currentActiveData ? JSON.parse(currentActiveData) : []
-          const currentArchived = currentArchivedData ? JSON.parse(currentArchivedData) : []
+          // Count successful and failed imports
+          let successCount = 0
+          let failCount = 0
 
-          // Separate imported data into active and archived
-          const importedActive = []
-          const importedArchived = []
-
+          // Process each service order
           for (const item of importData.data) {
-            // Ensure the item has all required fields
-            const processedItem = {
-              id: item.id,
-              customer_name: item.customer_name,
-              customer_phone: item.customer_phone,
-              customer_email: item.customer_email || null,
-              company: item.company || null,
-              item_type: item.item_type,
-              serial_number: item.serial_number || null,
-              quantity: item.quantity || 1,
-              description: item.description,
-              urgency: item.urgency || 'normal',
-              expected_completion: item.expected_completion || null,
-              status: item.status || 'received',
-              parts: item.parts || [],
-              labor: item.labor || [],
-              parts_total: item.parts_total || 0,
-              labor_total: item.labor_total || 0,
-              tax_rate: item.tax_rate || 0,
-              tax: item.tax || 0,
-              subtotal: item.subtotal || 0,
-              total: item.total || 0,
-              archived_at: item.archived_at || null,
-              created_at: item.created_at || new Date().toISOString(),
-              updated_at: item.updated_at || new Date().toISOString(),
-              statusHistory: item.statusHistory || []
-            }
+            try {
+              // Check if item already exists
+              const { data: existingItem } = await nocodeBackend
+                .from('service_orders_public_st847291')
+                .select('*')
+                .eq('id', item.id)
+                .single()
+                .execute()
 
-            if (processedItem.archived_at) {
-              importedArchived.push(processedItem)
-            } else {
-              importedActive.push(processedItem)
-            }
-          }
-
-          // Merge with existing data, avoiding duplicates
-          const mergeArrays = (current, imported) => {
-            const merged = [...current]
-            let addedCount = 0
-
-            for (const importedItem of imported) {
-              const existingIndex = merged.findIndex(item => item.id === importedItem.id)
-              if (existingIndex >= 0) {
+              if (existingItem) {
                 // Update existing item
-                merged[existingIndex] = importedItem
+                const { error: updateError } = await nocodeBackend
+                  .from('service_orders_public_st847291')
+                  .update({
+                    customer_name: item.customer_name,
+                    customer_phone: item.customer_phone,
+                    customer_email: item.customer_email,
+                    company: item.company,
+                    item_type: item.item_type,
+                    serial_number: item.serial_number || null,
+                    quantity: item.quantity,
+                    description: item.description,
+                    urgency: item.urgency,
+                    expected_completion: item.expected_completion,
+                    status: item.status,
+                    parts: item.parts || [],
+                    labor: item.labor || [],
+                    parts_total: item.parts_total || 0,
+                    labor_total: item.labor_total || 0,
+                    tax_rate: item.tax_rate || 0,
+                    tax: item.tax || 0,
+                    subtotal: item.subtotal || 0,
+                    total: item.total || 0,
+                    archived_at: item.archived_at,
+                    updated_at: new Date().toISOString()
+                  })
+                  .eq('id', item.id)
+                  .execute()
+
+                if (updateError) throw updateError
               } else {
-                // Add new item
-                merged.push(importedItem)
-                addedCount++
+                // Insert new item
+                const { error: insertError } = await nocodeBackend
+                  .from('service_orders_public_st847291')
+                  .insert([{
+                    id: item.id,
+                    customer_name: item.customer_name,
+                    customer_phone: item.customer_phone,
+                    customer_email: item.customer_email,
+                    company: item.company,
+                    item_type: item.item_type,
+                    serial_number: item.serial_number || null,
+                    quantity: item.quantity,
+                    description: item.description,
+                    urgency: item.urgency,
+                    expected_completion: item.expected_completion,
+                    status: item.status,
+                    parts: item.parts || [],
+                    labor: item.labor || [],
+                    parts_total: item.parts_total || 0,
+                    labor_total: item.labor_total || 0,
+                    tax_rate: item.tax_rate || 0,
+                    tax: item.tax || 0,
+                    subtotal: item.subtotal || 0,
+                    total: item.total || 0,
+                    archived_at: item.archived_at,
+                    created_at: item.created_at || new Date().toISOString(),
+                    updated_at: new Date().toISOString()
+                  }])
+                  .execute()
+
+                if (insertError) throw insertError
               }
+
+              // Import status history for this item if it exists
+              if (item.statusHistory && Array.isArray(item.statusHistory)) {
+                for (const history of item.statusHistory) {
+                  try {
+                    const { error: historyError } = await nocodeBackend
+                      .from('status_history_public_st847291')
+                      .insert([{
+                        service_order_id: item.id,
+                        status: history.status,
+                        notes: history.notes || '',
+                        created_at: history.created_at
+                      }])
+                      .execute()
+
+                    if (historyError) {
+                      console.error('Error importing history:', historyError)
+                    }
+                  } catch (historyErr) {
+                    console.error('Error importing history entry:', historyErr)
+                  }
+                }
+              }
+
+              successCount++
+
+            } catch (error) {
+              console.error(`Error importing item ${item.id}:`, error)
+              failCount++
             }
-
-            return { merged, addedCount }
           }
-
-          const activeResult = mergeArrays(currentActive, importedActive)
-          const archivedResult = mergeArrays(currentArchived, importedArchived)
-
-          // Save to localStorage
-          localStorage.setItem('serviceTracker_activeOrders', JSON.stringify(activeResult.merged))
-          localStorage.setItem('serviceTracker_archivedOrders', JSON.stringify(archivedResult.merged))
 
           // Refresh data
           await refresh()
 
           // Show results
-          const totalAdded = activeResult.addedCount + archivedResult.addedCount
-          const totalUpdated = importData.data.length - totalAdded
-
           setMessage({
-            type: 'success',
-            text: `Import complete: ${totalAdded} new items added, ${totalUpdated} items updated.`
+            type: successCount > 0 ? 'success' : 'error',
+            text: `Import complete: ${successCount} items imported successfully, ${failCount} items failed.`
           })
+
         } catch (error) {
           console.error('Import parsing error:', error)
           setMessage({
@@ -204,6 +243,7 @@ const Settings = () => {
       }
 
       fileReader.readAsText(importFile)
+
     } catch (error) {
       console.error('Import error:', error)
       setMessage({
@@ -211,18 +251,6 @@ const Settings = () => {
         text: 'An unexpected error occurred during import.'
       })
       setLoading(false)
-    }
-  }
-
-  // Clear all data
-  const handleClearAllData = () => {
-    if (window.confirm('Are you sure you want to clear all data? This action cannot be undone.')) {
-      localStorage.removeItem('serviceTracker_activeOrders')
-      localStorage.removeItem('serviceTracker_archivedOrders')
-      localStorage.removeItem('serviceTracker_usedOrderIds')
-      
-      // Refresh the app
-      window.location.reload()
     }
   }
 
@@ -238,11 +266,11 @@ const Settings = () => {
           <p className="text-neutral-600">Manage your ServiceTracker settings and data</p>
         </div>
 
-        {/* Data Management */}
+        {/* Data Backup & Restore */}
         <div className="bg-white rounded-xl shadow-lg p-6 mb-8">
           <div className="flex items-center mb-6">
             <SafeIcon icon={FiDatabase} className="text-primary-500 text-2xl mr-3" />
-            <h2 className="text-xl font-semibold text-neutral-900">Data Management</h2>
+            <h2 className="text-xl font-semibold text-neutral-900">Data Backup & Restore</h2>
           </div>
 
           {/* Message display */}
@@ -255,10 +283,7 @@ const Settings = () => {
                 : 'bg-blue-50 text-blue-800'
             }`}>
               <SafeIcon 
-                icon={
-                  message.type === 'success' ? FiCheck : 
-                  message.type === 'error' ? FiAlertCircle : FiInfo
-                } 
+                icon={message.type === 'success' ? FiCheck : message.type === 'error' ? FiAlertCircle : FiInfo} 
                 className="mr-3 text-lg" 
               />
               <p>{message.text}</p>
@@ -275,6 +300,7 @@ const Settings = () => {
               <p className="text-neutral-600 mb-6">
                 Download all your service orders as a JSON file for backup or transfer purposes.
               </p>
+
               <div className="mb-6">
                 <label className="flex items-center">
                   <input
@@ -286,6 +312,7 @@ const Settings = () => {
                   <span className="text-neutral-700">Include archived service orders</span>
                 </label>
               </div>
+
               <div className="flex items-center justify-between">
                 <div className="text-sm text-neutral-500">
                   Total: {items.length + (exportIncludeArchived ? archivedItems.length : 0)} service orders
@@ -310,6 +337,7 @@ const Settings = () => {
               <p className="text-neutral-600 mb-6">
                 Restore service orders from a previously exported JSON file.
               </p>
+
               <div className="mb-6">
                 <label className="block mb-2 text-sm font-medium text-neutral-700">
                   Select export file (.json)
@@ -321,6 +349,7 @@ const Settings = () => {
                   className="w-full text-sm text-neutral-700 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-primary-50 file:text-primary-700 hover:file:bg-primary-100"
                 />
               </div>
+
               <div className="flex justify-end">
                 <button
                   onClick={handleImport}
@@ -334,39 +363,38 @@ const Settings = () => {
             </div>
           </div>
 
-          {/* Clear Data Section */}
-          <div className="mt-8 pt-6 border-t border-neutral-200">
-            <div className="flex items-center justify-between">
-              <div>
-                <h3 className="text-lg font-medium text-neutral-900 mb-2">Clear All Data</h3>
-                <p className="text-neutral-600">
-                  Permanently delete all service orders and reset the application. This action cannot be undone.
-                </p>
-              </div>
-              <button
-                onClick={handleClearAllData}
-                className="flex items-center px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors duration-200"
-              >
-                <SafeIcon icon={FiTrash2} className="mr-2" />
-                Clear All Data
-              </button>
-            </div>
-          </div>
-
-          {/* Info Section */}
-          <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+          {/* Warning/Info Section */}
+          <div className="mt-6 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
             <div className="flex">
-              <SafeIcon icon={FiInfo} className="text-blue-600 mt-1 mr-3 flex-shrink-0" />
+              <SafeIcon icon={FiInfo} className="text-yellow-600 mt-1 mr-3 flex-shrink-0" />
               <div>
-                <h4 className="font-medium text-blue-800 mb-1">Local Storage Information</h4>
-                <ul className="text-sm text-blue-700 list-disc list-inside space-y-1">
-                  <li>All data is stored locally in your browser</li>
-                  <li>Data persists between browser sessions</li>
-                  <li>Clearing browser data will remove all service orders</li>
-                  <li>Use export/import to backup and transfer data</li>
+                <h4 className="font-medium text-yellow-800 mb-1">Important Information</h4>
+                <ul className="text-sm text-yellow-700 list-disc list-inside space-y-1">
+                  <li>Importing will add new service orders and update existing ones</li>
                   <li>Service order IDs are preserved during import/export</li>
+                  <li>Status history is included in exports and will be restored during import</li>
+                  <li>For large datasets, the import process may take a few moments to complete</li>
+                  <li>Data is now stored via NoCode Backend API instead of Supabase</li>
                 </ul>
               </div>
+            </div>
+          </div>
+        </div>
+
+        {/* NoCode Backend Info Section */}
+        <div className="bg-white rounded-xl shadow-lg p-6">
+          <div className="flex items-center mb-4">
+            <SafeIcon icon={FiInfo} className="text-blue-500 text-2xl mr-3" />
+            <h2 className="text-xl font-semibold text-neutral-900">Backend Information</h2>
+          </div>
+          
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+            <h4 className="font-medium text-blue-800 mb-2">NoCode Backend Configuration</h4>
+            <div className="text-sm text-blue-700 space-y-1">
+              <p><strong>Base URL:</strong> https://openapi.nocodebackend.com</p>
+              <p><strong>Instance:</strong> 53878_service_orders_db</p>
+              <p><strong>Table:</strong> service_orders_public_st847291</p>
+              <p><strong>Status:</strong> Connected and operational</p>
             </div>
           </div>
         </div>

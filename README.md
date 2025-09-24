@@ -1,8 +1,65 @@
 # ServiceTracker
 
-A modern service order management system built with React and Tailwind CSS. All data is stored locally in your browser using localStorage.
+A modern service order management system built with React and NoCode Backend API.
 
-## Features
+## Backend Migration
+
+This app has been migrated from Supabase to NoCode Backend for improved flexibility and control.
+
+### NoCode Backend Configuration
+
+- **Base URL**: https://openapi.nocodebackend.com
+- **Instance**: 53878_service_orders_db
+- **Table**: service_orders_public_st847291
+- **Authentication**: Bearer token and API key authentication enabled
+
+### API Endpoints
+
+The app now uses REST API calls with authentication:
+
+- **Read**: `GET /read/service_orders_public_st847291?Instance=53878_service_orders_db`
+- **Create**: `POST /create/service_orders_public_st847291?Instance=53878_service_orders_db`
+- **Update**: `PUT /update/service_orders_public_st847291/{id}?Instance=53878_service_orders_db`
+- **Delete**: `DELETE /delete/service_orders_public_st847291/{id}?Instance=53878_service_orders_db`
+
+All requests include:
+- `Authorization: Bearer {API_KEY}`
+- `X-API-Key: {API_KEY}`
+- `Content-Type: application/json`
+
+### Data Schema
+
+The NoCode Backend expects the following field structure:
+
+```json
+{
+  "service_id": "string (primary key)",
+  "customer_name": "string",
+  "customer_phone": "string", 
+  "customer_email": "string",
+  "company": "string",
+  "item_type": "string",
+  "quantity": "integer",
+  "description": "string",
+  "urgency": "string",
+  "expected_completion": "date",
+  "status": "string",
+  "serial_number": "string",
+  "parts": "string (JSON)",
+  "labor": "string (JSON)",
+  "parts_total": "number",
+  "labor_total": "number", 
+  "tax_rate": "number",
+  "tax": "number",
+  "subtotal": "number",
+  "total": "number",
+  "archived_at": "datetime",
+  "created_at": "datetime",
+  "updated_at": "datetime"
+}
+```
+
+## Key Features
 
 - **Random Order IDs**: Simple 3-digit numbers (101-999) instead of complex UUIDs
 - **Service Order Management**: Create, track, and manage service orders
@@ -10,116 +67,102 @@ A modern service order management system built with React and Tailwind CSS. All 
 - **Parts & Labor**: Add parts and labor costs with automatic calculations
 - **Print Receipts**: Professional receipt printing
 - **Archive System**: Archive completed orders
-- **Local Storage**: All data stored locally in your browser
-- **Export/Import**: Backup and restore your data
 - **Responsive Design**: Works on desktop and mobile
+- **Secure API Integration**: Authenticated REST API calls to NoCode Backend
 
-## Getting Started
+## Development
 
 ```bash
 npm install
 npm run dev
 ```
 
-The app will be available at `http://localhost:5173`
+## Database Schema
 
-## Data Storage
+The app uses REST API calls to NoCode Backend:
 
-This application uses **localStorage** to store all data locally in your browser:
+- `service_orders_public_st847291` - Main service orders table
+- `status_history_public_st847291` - Status change history (optional)
+- `user_profiles_st847291` - User profile information (optional)
 
-- **Active Orders**: Stored in `serviceTracker_activeOrders`
-- **Archived Orders**: Stored in `serviceTracker_archivedOrders`
-- **Used Order IDs**: Stored in `serviceTracker_usedOrderIds`
+## Authentication
 
-### Data Persistence
+Authentication has been simplified to use local storage instead of Supabase Auth:
 
-- Data persists between browser sessions
-- Clearing browser data will remove all service orders
-- Use the export/import feature in Settings to backup your data
-- Data is not synced between different browsers or devices
+- User sessions stored locally
+- No external authentication dependencies
+- Simple email/password based login
+- API calls are secured with Bearer token authentication
 
-## Key Features
+## Migration Changes
 
-### Order ID System
-- Uses simple 3-digit IDs (101-999)
-- Randomly generated to avoid sequential patterns
-- Automatically tracks used IDs to prevent duplicates
+### What Changed:
+1. **Supabase Client Removed**: All `supabase.from()` calls replaced with `fetch()` API calls
+2. **Authentication Simplified**: Local storage based auth instead of Supabase Auth
+3. **Real-time Removed**: No more real-time subscriptions (polling can be added if needed)
+4. **Direct REST API**: All database operations now use HTTP requests
+5. **Field Mapping**: Updated to match NoCode Backend schema (e.g., `id` → `service_id`)
+6. **API Security**: Added Bearer token and API key authentication
 
-### Status Management
-- **Received**: New orders just logged into the system
-- **Needs Quote**: Items requiring price estimation
-- **In Progress**: Active repair work
-- **Waiting on Parts**: Delayed due to parts availability
-- **Quote Approval**: Awaiting customer approval for repairs
-- **Ready**: Completed and ready for pickup/delivery
-- **Completed**: Finished orders
-- **Archived**: Long-term storage for completed orders
+### What Stayed the Same:
+1. **UI/UX**: No changes to user interface
+2. **Features**: All functionality preserved
+3. **Data Structure**: Same logical data format
+4. **Order ID System**: Still uses simple 3-digit IDs
 
-### Parts & Labor Tracking
-- Add multiple parts with quantities and prices
-- Track labor hours and rates
-- Automatic tax calculations
-- Warranty support (parts/labor marked as warranty don't count toward totals)
+## API Security
 
-### Receipt Printing
-- Professional printable receipts
-- Includes all service details, parts, labor, and totals
-- Quote approval forms for customer signatures
+The NoCode Backend client is now configured with authentication:
 
-## Data Management
-
-### Export Data
-- Download all service orders as JSON
-- Option to include or exclude archived orders
-- Preserves all data including status history
-
-### Import Data
-- Restore from previously exported JSON files
-- Merges with existing data
-- Updates existing orders and adds new ones
-- Preserves order IDs and status history
-
-### Clear Data
-- Reset the entire application
-- Removes all orders and resets order ID counter
-- Cannot be undone - use export first for backup
-
-## Development
-
-### Project Structure
-```
-src/
-├── components/          # Reusable UI components
-├── pages/              # Main application pages
-├── hooks/              # Custom React hooks
-├── utils/              # Utility functions
-└── common/             # Common components (SafeIcon)
+```javascript
+// API calls include these headers:
+{
+  'Content-Type': 'application/json',
+  'Accept': 'application/json',
+  'Authorization': 'Bearer da202a5855991836c853149b2b9ba4d80e2c4db0e0f9c8324d391ee89750',
+  'X-API-Key': 'da202a5855991836c853149b2b9ba4d80e2c4db0e0f9c8324d391ee89750'
+}
 ```
 
-### Key Files
-- `src/hooks/useServiceOrders.js`: Main data management logic
-- `src/utils/orderIdGenerator.js`: Order ID generation system
-- `src/pages/Settings.jsx`: Data export/import functionality
+## Real-time Updates
 
-## Browser Compatibility
+Since NoCode Backend uses REST API instead of WebSockets, real-time updates are not available by default. You can implement polling if needed:
 
-Works in all modern browsers that support:
-- localStorage
-- ES6 features
-- CSS Grid and Flexbox
+```javascript
+// Add to useServiceOrders hook
+useEffect(() => {
+  const interval = setInterval(() => {
+    refresh() // Refresh data every 30 seconds
+  }, 30000)
+  
+  return () => clearInterval(interval)
+}, [])
+```
 
-## Limitations
+## Troubleshooting
 
-- Data is not synchronized between devices
-- Storage limited by browser localStorage limits (typically 5-10MB)
-- No user authentication or multi-user support
-- No real-time collaboration features
+### Common Issues:
 
-## Future Enhancements
+1. **"Record not found" errors**: The API uses `service_id` as the primary key, not `id`
+2. **JSON field errors**: Parts and labor are stored as JSON strings in the API
+3. **Parameter naming**: Use `Instance` (capital I) in query parameters
+4. **Update operations**: Require finding the record first to get the internal ID
+5. **Authentication errors**: Ensure API key is valid and included in headers
 
-Potential features for future versions:
-- Cloud storage integration
-- Multi-user support
-- Real-time synchronization
-- Mobile app
-- Advanced reporting and analytics
+### Debug Mode:
+
+Enable console logging to see API calls:
+- All API requests and responses are logged to the browser console
+- Check Network tab in Developer Tools for detailed request/response data
+- Authentication status is logged on client initialization
+
+### Status History:
+
+The status history table may not exist in your NoCode Backend instance. The app handles this gracefully and will continue working without status history tracking.
+
+## Security Notes
+
+- API key is embedded in the client code for this demo
+- In production, consider using environment variables
+- The API key provides access to your NoCode Backend instance
+- Keep the API key secure and rotate it regularly

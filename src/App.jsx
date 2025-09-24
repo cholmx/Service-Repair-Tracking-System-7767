@@ -31,7 +31,7 @@ function App() {
     <Router>
       <div className="min-h-screen bg-neutral-200">
         <Navbar />
-        <motion.main 
+        <motion.main
           className="pt-16"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
@@ -49,10 +49,7 @@ function App() {
 
         {/* Print Receipt Modal */}
         {printItem && (
-          <PrintReceipt 
-            item={printItem} 
-            onClose={closePrintReceipt} 
-          />
+          <PrintReceipt item={printItem} onClose={closePrintReceipt} />
         )}
       </div>
     </Router>

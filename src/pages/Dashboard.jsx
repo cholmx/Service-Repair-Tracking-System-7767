@@ -1,6 +1,6 @@
 import React from 'react';
 import {motion} from 'framer-motion';
-import {useServiceOrdersSupabase as useServiceOrders} from '../hooks/useServiceOrdersSupabase';
+import { useServiceOrders } from '../hooks/useServiceOrders';
 import RecentItems from '../components/RecentItems';
 import StatsCards from '../components/StatsCards';
 import FinishedOrders from '../components/FinishedOrders';

@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import * as FiIcons from 'react-icons/fi';
 import SafeIcon from '../common/SafeIcon';
-import { useServiceOrdersSupabase as useServiceOrders } from '../hooks/useServiceOrdersSupabase';
+import { useServiceOrders } from '../hooks/useServiceOrders';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 
@@ -112,7 +112,7 @@ const Settings = () => {
             try {
               // Check if item already exists
               const { data: existingItem } = await supabase
-                .from('service_orders_public_st847291')
+                .from('service_orders')
                 .select('id')
                 .eq('id', item.id)
                 .single();
@@ -120,7 +120,7 @@ const Settings = () => {
               if (existingItem) {
                 // Update existing item
                 const { error: updateError } = await supabase
-                  .from('service_orders_public_st847291')
+                  .from('service_orders')
                   .update({
                     customer_name: item.customer_name,
                     customer_phone: item.customer_phone,
@@ -150,7 +150,7 @@ const Settings = () => {
               } else {
                 // Insert new item
                 const { error: insertError } = await supabase
-                  .from('service_orders_public_st847291')
+                  .from('service_orders')
                   .insert([{
                     id: item.id,
                     customer_name: item.customer_name,
@@ -185,7 +185,7 @@ const Settings = () => {
                 for (const history of item.statusHistory) {
                   // Check if history entry already exists (by service_order_id, status and timestamp)
                   const { data: existingHistory } = await supabase
-                    .from('status_history_public_st847291')
+                    .from('status_history')
                     .select('id')
                     .eq('service_order_id', item.id)
                     .eq('status', history.status)
@@ -194,7 +194,7 @@ const Settings = () => {
                   
                   if (!existingHistory) {
                     const { error: historyError } = await supabase
-                      .from('status_history_public_st847291')
+                      .from('status_history')
                       .insert([{
                         service_order_id: item.id,
                         status: history.status,

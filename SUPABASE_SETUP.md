@@ -1,96 +1,38 @@
-# Supabase Database Setup Guide
+# Supabase Setup for Bolt.new
 
-## Fix "invalid input syntax for type uuid" Error
+This ServiceTracker application uses Bolt.new's built-in Supabase database. The database is pre-configured and ready to use!
 
-You're getting this error because the database tables are expecting UUID values, but the app is trying to use simple numeric IDs like "328".
+## Database Tables
 
-## Database Setup Instructions
+The application uses two main tables:
 
-1. **Login to Supabase Dashboard**
-   - Go to https://app.supabase.com/
-   - Select your project
+### 1. service_orders
 
-2. **Open SQL Editor**
-   - Click on "SQL Editor" in the left menu
-   - Click "New Query"
+Stores all service/repair orders with customer information, item details, pricing, and status.
 
-3. **Run This SQL Script**
-   - Copy and paste the following SQL:
+**Key Columns:**
+- `id` (TEXT) - Simple order IDs like "328", "762", etc.
+- Customer fields: `customer_name`, `customer_phone`, `customer_email`, `company`
+- Item fields: `item_type`, `serial_number`, `quantity`, `description`
+- Status tracking: `status`, `urgency`, `expected_completion`
+- Pricing: `parts`, `labor`, `parts_total`, `labor_total`, `tax_rate`, `tax`, `subtotal`, `total`
+- Timestamps: `created_at`, `updated_at`, `archived_at`
 
-```sql
--- Drop existing tables completely
-DROP TABLE IF EXISTS status_history_public_st847291 CASCADE;
-DROP TABLE IF EXISTS service_orders_public_st847291 CASCADE;
+### 2. status_history
 
--- Create service orders table with TEXT id (not UUID)
-CREATE TABLE service_orders_public_st847291 (
-  id TEXT PRIMARY KEY,
-  customer_name TEXT NOT NULL,
-  customer_phone TEXT NOT NULL,
-  customer_email TEXT,
-  company TEXT,
-  item_type TEXT NOT NULL,
-  quantity INTEGER NOT NULL DEFAULT 1,
-  description TEXT NOT NULL,
-  urgency TEXT DEFAULT 'normal',
-  expected_completion DATE,
-  status TEXT NOT NULL DEFAULT 'received',
-  parts JSONB DEFAULT '[]'::jsonb,
-  labor JSONB DEFAULT '[]'::jsonb,
-  parts_total NUMERIC(10,2) DEFAULT 0,
-  labor_total NUMERIC(10,2) DEFAULT 0,
-  tax_rate NUMERIC(5,2) DEFAULT 0,
-  tax NUMERIC(10,2) DEFAULT 0,
-  subtotal NUMERIC(10,2) DEFAULT 0,
-  total NUMERIC(10,2) DEFAULT 0,
-  archived_at TIMESTAMP WITH TIME ZONE,
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT now(),
-  updated_at TIMESTAMP WITH TIME ZONE DEFAULT now()
-);
+Tracks all status changes for complete audit trail.
 
--- Enable RLS and create policies
-ALTER TABLE service_orders_public_st847291 ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "Allow all operations on service orders" ON service_orders_public_st847291
-FOR ALL USING (true) WITH CHECK (true);
+**Key Columns:**
+- `id` (UUID) - Auto-generated unique identifier
+- `service_order_id` (TEXT) - Links to service_orders.id
+- `status` (TEXT) - The status that was set
+- `notes` (TEXT) - Optional notes about the change
+- `created_at` (TIMESTAMPTZ) - When the change occurred
 
--- Create status history table with TEXT foreign key
-CREATE TABLE status_history_public_st847291 (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  service_order_id TEXT NOT NULL REFERENCES service_orders_public_st847291(id) ON DELETE CASCADE,
-  status TEXT NOT NULL,
-  notes TEXT,
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT now()
-);
+## Order ID System
 
--- Enable RLS and create policies for status history
-ALTER TABLE status_history_public_st847291 ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "Allow all operations on status history" ON status_history_public_st847291
-FOR ALL USING (true) WITH CHECK (true);
+Unlike traditional databases that use UUIDs, ServiceTracker uses simple 3-digit numbers for easy customer reference.
 
--- Create indexes for performance
-CREATE INDEX idx_service_orders_status ON service_orders_public_st847291(status);
-CREATE INDEX idx_service_orders_created_at ON service_orders_public_st847291(created_at);
-CREATE INDEX idx_service_orders_archived_at ON service_orders_public_st847291(archived_at);
-CREATE INDEX idx_status_history_service_order_id ON status_history_public_st847291(service_order_id);
-CREATE INDEX idx_status_history_created_at ON status_history_public_st847291(created_at);
-```
+## Data Backup & Restore
 
-4. **Click "Run" to execute the SQL**
-
-5. **Reload your ServiceTracker app**
-   - The error should be fixed
-   - You can now create service orders with IDs like "328", "762", etc.
-
-## Explanation
-
-The key fix is changing:
-- `id UUID PRIMARY KEY` to `id TEXT PRIMARY KEY`
-
-This allows the app to use simple text IDs (like "328") instead of complex UUIDs.
-
-## If Still Having Issues
-
-1. Check the browser console for errors
-2. Make sure the SQL script executed successfully
-3. Try clearing your browser cache or using incognito mode
-4. Verify you're using the latest code from the repository
+The Settings page includes built-in export/import functionality for data backup and migration.

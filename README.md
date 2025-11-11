@@ -1,37 +1,25 @@
 # ServiceTracker
 
-A modern service order management system built with React and NoCode Backend API.
-
-## 🔄 Migration to NoCode Backend
-
-This application has been **migrated from Supabase to NoCode Backend API** for improved performance and simplified backend management.
-
-### NoCode Backend Configuration
-
-- **Base URL**: `https://openapi.nocodebackend.com`
-- **Instance**: `53878_service_orders_db`
-- **Table**: `service_orders_public_st847291`
-- **Authentication**: Bearer Token (configured in `src/lib/nocodeApi.js`)
-
-### API Endpoints Used
-
-1. **Create Service Order**: `POST /create/service_orders_public_st847291?Instance=53878_service_orders_db`
-2. **Read Service Orders**: `GET /read/service_orders_public_st847291?Instance=53878_service_orders_db`
-3. **Update Service Order**: `PUT /update/service_orders_public_st847291/{id}?Instance=53878_service_orders_db`
-4. **Delete Service Order**: `DELETE /delete/service_orders_public_st847291/{id}?Instance=53878_service_orders_db`
-5. **Search Service Orders**: `POST /search/service_orders_public_st847291?Instance=53878_service_orders_db`
+A modern service order management system built with React and Supabase on Bolt.new.
 
 ## Key Features
 
-- **Random Order IDs**: Simple 3-digit numbers (101-999) instead of complex UUIDs
-- **Service Order Management**: Create, track, and manage service orders
-- **Status Tracking**: Real-time status updates with history
-- **Parts & Labor**: Add parts and labor costs with automatic calculations
-- **Warranty Support**: Mark parts and labor as warranty items
-- **Print Receipts**: Professional receipt printing
-- **Archive System**: Archive completed orders
-- **Responsive Design**: Works on desktop and mobile
-- **NoCode Backend Integration**: Seamless API integration with proper error handling
+- **Simple Order IDs**: Easy-to-remember 3-digit order numbers (101-999)
+- **Service Order Management**: Create, track, and manage repair/service orders
+- **Status Tracking**: Real-time status updates with complete history
+- **Quote Management**: Create and approve quotes before starting work
+- **Parts & Labor**: Track parts and labor with automatic cost calculations
+- **Warranty Support**: Mark parts and labor as warranty items (no charge)
+- **Print Receipts**: Professional receipt printing for customers
+- **Archive System**: Archive completed orders to keep workspace clean
+- **Responsive Design**: Works seamlessly on desktop and mobile
+- **Supabase Integration**: Fast, reliable database with Bolt.new
+
+## Setup
+
+1. The Supabase database is pre-configured in Bolt.new
+2. Database tables are automatically created via migration
+3. Just run the app and start using it!
 
 ## Development
 
@@ -42,16 +30,15 @@ npm run dev
 
 ## File Structure
 
-### API Integration
-- `src/lib/nocodeApi.js` - NoCode Backend API client with full CRUD operations
-- `src/hooks/useServiceOrders.js` - React hook for service order management (updated for NoCode Backend)
-
-### Legacy Files (Maintained for Reference)
-- `src/lib/supabase.js` - Original Supabase client (kept for backward compatibility)
+- `src/lib/supabase.js` - Supabase client configuration for Bolt.new
+- `src/hooks/useServiceOrders.js` - React hook for service order management
+- `src/pages/` - Main application pages (Dashboard, ItemIntake, ItemDetails, etc.)
+- `src/components/` - Reusable UI components
+- `supabase/migrations/` - Database schema migrations
 
 ## Database Schema
 
-The NoCode Backend uses the following table structure:
+The Supabase database uses the following tables:
 
 ```json
 {
@@ -83,8 +70,9 @@ The NoCode Backend uses the following table structure:
 
 ## Status Workflow
 
-- `received` → `needs-quote` → `quote-approval` → `in-progress` → `ready` → `completed` → `archived`
-- Direct path: `received` → `in-progress` → `ready` → `completed` → `archived`
+- With quotes: `received` → `needs-quote` → `quote-approval` → `in-progress` → `ready` → `completed` → `archived`
+- Without quotes: `received` → `in-progress` → `ready` → `completed` → `archived`
+- Can also go to `waiting-parts` during `in-progress` if waiting on parts to arrive
 
 ## Parts & Labor with Warranty Support
 
@@ -110,21 +98,18 @@ The NoCode Backend uses the following table structure:
 
 When `isWarranty` is `true`, the price/rate is set to 0 and not included in totals.
 
-## Error Handling
+## Data Management
 
-The NoCode API client includes comprehensive error handling:
+- **Export**: Download all service orders as JSON for backup
+- **Import**: Restore service orders from exported JSON files
+- **Archive**: Move completed orders to archive to keep dashboard clean
+- **Delete**: Permanently delete archived orders
 
-- **Network errors**: Handles connection failures and timeouts
-- **Authentication errors**: Manages invalid bearer tokens
-- **Validation errors**: Processes API validation responses
-- **Rate limiting**: Handles API rate limit responses
-- **Data transformation**: Ensures consistent data format between API and UI
+## Technology Stack
 
-## Migration Notes
-
-1. **Data Format**: Parts and labor are stored as JSON strings in NoCode Backend vs JSONB in Supabase
-2. **Status History**: Currently handled in local state (can be extended to separate table if needed)
-3. **Authentication**: Uses Bearer token authentication instead of Supabase RLS
-4. **Real-time Updates**: Currently polling-based (can be enhanced with webhooks)
-
-The application maintains full backward compatibility and all existing features work seamlessly with the new NoCode Backend.
+- **Frontend**: React 18 with React Router
+- **Styling**: TailwindCSS with custom design system
+- **Animations**: Framer Motion
+- **Icons**: React Icons (Feather Icons)
+- **Database**: Supabase (PostgreSQL)
+- **Hosting**: Bolt.new

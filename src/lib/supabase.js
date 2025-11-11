@@ -19,10 +19,5 @@ const supabaseClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
   }
 })
 
-console.log('Supabase client initialized for Bolt.new:', {
-  url: SUPABASE_URL,
-  connected: true
-})
-
 export default supabaseClient
 export const supabase = supabaseClient

@@ -5,6 +5,7 @@ import { useServiceOrders } from '../hooks/useServiceOrders';
 import * as FiIcons from 'react-icons/fi';
 import SafeIcon from '../common/SafeIcon';
 import StatusBadge from '../components/StatusBadge';
+import LoadingSkeleton from '../components/LoadingSkeleton';
 
 const { FiArrowLeft, FiEdit3, FiSave, FiX, FiClock, FiUser, FiPhone, FiMail, FiPackage, FiBuilding, FiPlus, FiTrash2, FiPrinter, FiHash, FiShield } = FiIcons;
 
@@ -17,19 +18,11 @@ const ItemDetails = ({ onPrintReceipt }) => {
   const [customerEditData, setCustomerEditData] = useState({});
   const [isSaving, setIsSaving] = useState(false);
 
-  // Find item in both active and archived items
   const allItems = [...items, ...archivedItems];
   const item = allItems.find(item => item.id === id);
 
   if (loading) {
-    return (
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-500 mx-auto mb-4"></div>
-          <p className="text-neutral-600">Loading service order...</p>
-        </div>
-      </div>
-    );
+    return <LoadingSkeleton type="details" />;
   }
 
   if (!item) {

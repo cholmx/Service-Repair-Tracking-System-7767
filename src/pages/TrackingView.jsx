@@ -5,19 +5,23 @@ import { useServiceOrders } from '../hooks/useServiceOrders';
 import * as FiIcons from 'react-icons/fi';
 import SafeIcon from '../common/SafeIcon';
 import StatusBadge from '../components/StatusBadge';
+import LoadingSkeleton from '../components/LoadingSkeleton';
+import ToastContainer from '../components/ToastContainer';
+import { supabase } from '../lib/supabase';
 
 const { FiSearch, FiFilter, FiEye, FiArchive, FiX, FiRefreshCw, FiTrash2, FiHash } = FiIcons;
 
 const TrackingView = () => {
-  const { items, archivedItems, loading, archiveItem, deleteArchivedItem } = useServiceOrders();
+  const { items, archivedItems, loading, archiveItem, deleteArchivedItem, refresh } = useServiceOrders();
   const [searchParams, setSearchParams] = useSearchParams();
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [sortBy, setSortBy] = useState('newest');
   const [showArchived, setShowArchived] = useState(false);
   const [deleteConfirmId, setDeleteConfirmId] = useState(null);
+  const [archiveConfirmId, setArchiveConfirmId] = useState(null);
+  const [toasts, setToasts] = useState([]);
 
-  // Get filter from URL params
   useEffect(() => {
     const filterParam = searchParams.get('filter');
     if (filterParam && filterParam !== 'all') {
@@ -26,14 +30,7 @@ const TrackingView = () => {
   }, [searchParams]);
 
   if (loading) {
-    return (
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-500 mx-auto mb-4"></div>
-          <p className="text-neutral-600">Loading service orders...</p>
-        </div>
-      </div>
-    );
+    return <LoadingSkeleton type="tracking" />;
   }
 
   const activeItems = showArchived ? archivedItems : items;
@@ -67,13 +64,60 @@ const TrackingView = () => {
       }
     });
 
-  const handleArchive = async (itemId, e) => {
+  const addToast = (message, type = 'success', undoAction = null) => {
+    const id = Date.now();
+    setToasts(prev => [...prev, { id, message, type, undoAction }]);
+  };
+
+  const removeToast = (id) => {
+    setToasts(prev => prev.filter(toast => toast.id !== id));
+  };
+
+  const handleUndo = async (toast) => {
+    if (toast.undoAction) {
+      try {
+        await toast.undoAction();
+        removeToast(toast.id);
+        addToast('Action undone successfully', 'success');
+      } catch (error) {
+        addToast('Failed to undo action', 'error');
+      }
+    }
+  };
+
+  const handleArchiveConfirm = (itemId, e) => {
     e.preventDefault();
     e.stopPropagation();
-    try {
-      await archiveItem(itemId);
-    } catch (error) {
-      console.error('Failed to archive item:', error);
+    setArchiveConfirmId(itemId);
+  };
+
+  const handleArchiveCancel = () => {
+    setArchiveConfirmId(null);
+  };
+
+  const handleArchiveExecute = async () => {
+    if (archiveConfirmId) {
+      try {
+        const itemToArchive = items.find(item => item.id === archiveConfirmId);
+        await archiveItem(archiveConfirmId);
+        setArchiveConfirmId(null);
+
+        const undoAction = async () => {
+          await supabase
+            .from('service_orders')
+            .update({
+              status: itemToArchive.status,
+              archived_at: null,
+              updated_at: new Date().toISOString()
+            })
+            .eq('id', archiveConfirmId);
+          await refresh();
+        };
+
+        addToast(`Service Order #${archiveConfirmId} archived`, 'success', undoAction);
+      } catch (error) {
+        addToast('Failed to archive service order', 'error');
+      }
     }
   };
 
@@ -90,10 +134,56 @@ const TrackingView = () => {
   const handleDeleteExecute = async () => {
     if (deleteConfirmId) {
       try {
+        const itemToDelete = archivedItems.find(item => item.id === deleteConfirmId);
         await deleteArchivedItem(deleteConfirmId);
         setDeleteConfirmId(null);
+
+        const undoAction = async () => {
+          const restoreData = {
+            id: itemToDelete.id,
+            customer_name: itemToDelete.customer_name,
+            customer_phone: itemToDelete.customer_phone,
+            customer_email: itemToDelete.customer_email,
+            company: itemToDelete.company,
+            item_type: itemToDelete.item_type,
+            serial_number: itemToDelete.serial_number,
+            quantity: itemToDelete.quantity,
+            description: itemToDelete.description,
+            urgency: itemToDelete.urgency,
+            expected_completion: itemToDelete.expected_completion,
+            status: itemToDelete.status,
+            parts: itemToDelete.parts || [],
+            labor: itemToDelete.labor || [],
+            parts_total: itemToDelete.parts_total || 0,
+            labor_total: itemToDelete.labor_total || 0,
+            tax_rate: itemToDelete.tax_rate || 0,
+            tax: itemToDelete.tax || 0,
+            subtotal: itemToDelete.subtotal || 0,
+            total: itemToDelete.total || 0,
+            archived_at: itemToDelete.archived_at,
+            created_at: itemToDelete.created_at,
+            updated_at: new Date().toISOString()
+          };
+
+          await supabase.from('service_orders').insert([restoreData]);
+
+          if (itemToDelete.statusHistory && Array.isArray(itemToDelete.statusHistory)) {
+            for (const history of itemToDelete.statusHistory) {
+              await supabase.from('status_history').insert([{
+                service_order_id: itemToDelete.id,
+                status: history.status,
+                notes: history.notes || '',
+                created_at: history.created_at
+              }]);
+            }
+          }
+
+          await refresh();
+        };
+
+        addToast(`Service Order #${deleteConfirmId} deleted`, 'success', undoAction);
       } catch (error) {
-        console.error('Failed to delete item:', error);
+        addToast('Failed to delete service order', 'error');
       }
     }
   };
@@ -128,12 +218,14 @@ const TrackingView = () => {
   };
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
-      >
+    <>
+      <ToastContainer toasts={toasts} removeToast={removeToast} onUndo={handleUndo} />
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+        >
         <div className="mb-8">
           <div className="flex items-center justify-between">
             <div>
@@ -325,7 +417,7 @@ const TrackingView = () => {
 
                           {!showArchived && (item.status === 'completed' || item.status === 'ready') && (
                             <button
-                              onClick={(e) => handleArchive(item.id, e)}
+                              onClick={(e) => handleArchiveConfirm(item.id, e)}
                               className="inline-flex items-center px-3 py-1 rounded-md text-sm font-medium bg-neutral-100 text-neutral-700 hover:bg-neutral-200 transition-colors duration-200"
                               title="Archive this Service Order"
                             >
@@ -354,6 +446,51 @@ const TrackingView = () => {
           )}
         </div>
       </motion.div>
+
+      {/* Archive Confirmation Modal */}
+      {archiveConfirmId && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.9 }}
+            className="bg-white rounded-lg shadow-xl max-w-md w-full p-6"
+          >
+            <div className="flex items-center mb-4">
+              <div className="flex-shrink-0 w-10 h-10 bg-primary-100 rounded-full flex items-center justify-center">
+                <SafeIcon icon={FiArchive} className="text-primary-600 text-lg" />
+              </div>
+              <div className="ml-4">
+                <h3 className="text-lg font-medium text-neutral-900">
+                  Archive Service Order
+                </h3>
+                <p className="text-sm text-neutral-500">
+                  Service Order #{archiveConfirmId}
+                </p>
+              </div>
+            </div>
+            <div className="mb-6">
+              <p className="text-neutral-700">
+                Are you sure you want to archive this service order? Archived orders can be viewed in the archived section and can be permanently deleted later.
+              </p>
+            </div>
+            <div className="flex justify-end space-x-3">
+              <button
+                onClick={handleArchiveCancel}
+                className="px-4 py-2 text-sm font-medium text-neutral-700 bg-neutral-200 rounded-lg hover:bg-neutral-300 transition-colors duration-200"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleArchiveExecute}
+                className="px-4 py-2 text-sm font-medium text-white bg-primary-600 rounded-lg hover:bg-primary-700 transition-colors duration-200"
+              >
+                Archive
+              </button>
+            </div>
+          </motion.div>
+        </div>
+      )}
 
       {/* Delete Confirmation Modal */}
       {deleteConfirmId && (
@@ -399,7 +536,8 @@ const TrackingView = () => {
           </motion.div>
         </div>
       )}
-    </div>
+      </div>
+    </>
   );
 };
 

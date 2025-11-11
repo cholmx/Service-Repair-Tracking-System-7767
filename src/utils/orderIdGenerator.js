@@ -52,33 +52,22 @@ class OrderIdGenerator {
 
   // Generate a new unique order ID
   generateOrderId() {
-    // Check if we have any available IDs
     if (this.availableIds.length === 0) {
-      console.warn('All order IDs have been used. Resetting pool...');
       this.resetIdPool();
     }
 
-    // Get the next available ID
     const orderId = this.availableIds.pop();
-    
-    // Mark this ID as used
     this.usedIds.add(orderId);
-    
-    // Save the updated used IDs
     this.saveUsedIds();
-    
-    console.log(`Generated order ID: ${orderId}`);
+
     return orderId;
   }
 
-  // Reset the ID pool when all IDs have been used
   resetIdPool() {
     this.usedIds.clear();
     this.availableIds = [];
     this.initializeAvailableIds();
-    // Clear localStorage
     localStorage.removeItem('serviceTracker_usedOrderIds');
-    console.log('Order ID pool has been reset. Starting fresh with 101-999.');
   }
 
   // Get statistics about ID usage

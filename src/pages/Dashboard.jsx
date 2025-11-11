@@ -1,24 +1,18 @@
 import React from 'react';
-import {motion} from 'framer-motion';
+import { motion } from 'framer-motion';
 import { useServiceOrders } from '../hooks/useServiceOrders';
 import RecentItems from '../components/RecentItems';
 import StatsCards from '../components/StatsCards';
 import FinishedOrders from '../components/FinishedOrders';
 import QuoteManagement from '../components/QuoteManagement';
 import ReceivedOrders from '../components/ReceivedOrders';
+import LoadingSkeleton from '../components/LoadingSkeleton';
 
-const Dashboard = ({onPrintReceipt}) => {
-  const {items, loading, error} = useServiceOrders();
+const Dashboard = ({ onPrintReceipt }) => {
+  const { items, loading, error } = useServiceOrders();
 
   if (loading) {
-    return (
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-500 mx-auto mb-4"></div>
-          <p className="text-neutral-600">Loading service orders...</p>
-        </div>
-      </div>
-    );
+    return <LoadingSkeleton type="dashboard" />;
   }
 
   if (error) {

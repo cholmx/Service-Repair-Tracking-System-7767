@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { useServiceOrders } from '../hooks/useServiceOrders';
+import { useServiceOrdersSupabase as useServiceOrders } from '../hooks/useServiceOrdersSupabase';
 import * as FiIcons from 'react-icons/fi';
 import SafeIcon from '../common/SafeIcon';
 import StatusBadge from '../components/StatusBadge';

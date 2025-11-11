@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import * as FiIcons from 'react-icons/fi';
 import SafeIcon from '../common/SafeIcon';
-import { useServiceOrders } from '../hooks/useServiceOrders';
+import { useServiceOrdersSupabase as useServiceOrders } from '../hooks/useServiceOrdersSupabase';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 

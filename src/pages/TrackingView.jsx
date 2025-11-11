@@ -229,7 +229,7 @@ const TrackingView = () => {
         <div className="mb-8">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-3xl font-bold text-neutral-900 mb-2">
+              <h1 className="text-3xl font-bold text-neutral-900 mb-2 font-display">
                 {showArchived ? 'Archived Service Orders' : 'Track Service Orders'}
               </h1>
               <p className="text-neutral-600">

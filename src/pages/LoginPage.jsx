@@ -163,10 +163,10 @@ const LoginPage = () => {
           >
             <div className="flex items-center space-x-3 mb-8">
               <SafeIcon icon={FiTool} className="text-4xl" />
-              <h1 className="text-4xl font-bold">ServiceTracker</h1>
+              <h1 className="text-4xl font-bold font-display">ServiceTracker</h1>
             </div>
 
-            <h2 className="text-3xl font-bold mb-6 leading-tight">
+            <h2 className="text-3xl font-bold mb-6 leading-tight font-display">
               {mode === 'signin' ? 'Welcome Back to Your' : 'Start Your Journey with'} <br />
               Service Management Hub
             </h2>
@@ -212,7 +212,7 @@ const LoginPage = () => {
           <div className="lg:hidden text-center mb-8">
             <div className="flex items-center justify-center space-x-3 mb-4">
               <SafeIcon icon={FiTool} className="text-3xl text-primary-500" />
-              <h1 className="text-3xl font-bold text-neutral-900">ServiceTracker</h1>
+              <h1 className="text-3xl font-bold text-neutral-900 font-display">ServiceTracker</h1>
             </div>
             <p className="text-neutral-600">
               {mode === 'signin' ? 'Sign in to manage your service orders' : 'Create your account to get started'}

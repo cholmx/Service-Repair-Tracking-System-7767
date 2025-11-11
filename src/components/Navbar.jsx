@@ -27,7 +27,7 @@ const Navbar = () => {
         <div className="flex justify-between items-center h-16">
           <Link to="/dashboard" className="flex items-center space-x-2">
             <SafeIcon icon={FiTool} className="text-2xl text-primary-500" />
-            <span className="text-xl font-bold text-neutral-900">ServiceTracker</span>
+            <span className="text-xl font-bold text-neutral-900 font-display">ServiceTracker</span>
           </Link>
 
           {/* Desktop Navigation */}

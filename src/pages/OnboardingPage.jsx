@@ -84,10 +84,10 @@ const OnboardingPage = () => {
           >
             <div className="flex items-center space-x-3 mb-8">
               <SafeIcon icon={FiTool} className="text-4xl" />
-              <h1 className="text-4xl font-bold">ServiceTracker</h1>
+              <h1 className="text-4xl font-bold font-display">ServiceTracker</h1>
             </div>
             
-            <h2 className="text-3xl font-bold mb-6 leading-tight">
+            <h2 className="text-3xl font-bold mb-6 leading-tight font-display">
               Let's Get You <br />
               Set Up for Success
             </h2>
@@ -153,9 +153,9 @@ const OnboardingPage = () => {
           <div className="lg:hidden text-center mb-8">
             <div className="flex items-center justify-center space-x-3 mb-4">
               <SafeIcon icon={FiTool} className="text-3xl text-primary-500" />
-              <h1 className="text-3xl font-bold text-neutral-900">ServiceTracker</h1>
+              <h1 className="text-3xl font-bold text-neutral-900 font-display">ServiceTracker</h1>
             </div>
-            <h2 className="text-2xl font-bold text-neutral-900 mb-2">
+            <h2 className="text-2xl font-bold text-neutral-900 mb-2 font-display">
               Let's Get Started!
             </h2>
             <p className="text-neutral-600">

@@ -261,7 +261,7 @@ const Settings = () => {
         transition={{ duration: 0.5 }}
       >
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-neutral-900 mb-2">Settings</h1>
+          <h1 className="text-3xl font-bold text-neutral-900 mb-2 font-display">Settings</h1>
           <p className="text-neutral-600">Manage your ServiceTracker settings and data</p>
         </div>
 

@@ -78,7 +78,7 @@ const UpgradeModal = ({ isOpen, onClose }) => {
         <div className="p-6 border-b border-neutral-200">
           <div className="flex items-center justify-between">
             <div>
-              <h2 className="text-2xl font-bold text-neutral-900">Choose Your Plan</h2>
+              <h2 className="text-2xl font-bold text-neutral-900 font-display">Choose Your Plan</h2>
               <p className="text-neutral-600">Upgrade to unlock premium features</p>
             </div>
             <button
@@ -113,7 +113,7 @@ const UpgradeModal = ({ isOpen, onClose }) => {
 
                 <div className="text-center mb-4">
                   <SafeIcon icon={plan.icon} className="text-3xl text-primary-500 mx-auto mb-2" />
-                  <h3 className="text-xl font-bold text-neutral-900">{plan.name}</h3>
+                  <h3 className="text-xl font-bold text-neutral-900 font-display">{plan.name}</h3>
                   <div className="mt-2">
                     <span className="text-3xl font-bold text-neutral-900">{plan.price}</span>
                     <span className="text-neutral-600 ml-1">{plan.period}</span>

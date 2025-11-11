@@ -85,7 +85,7 @@ const AuthModal = ({ isOpen, onClose, initialMode = 'signin' }) => {
         className="bg-white rounded-xl shadow-xl max-w-md w-full p-8"
       >
         <div className="flex items-center justify-between mb-6">
-          <h2 className="text-2xl font-bold text-neutral-900">
+          <h2 className="text-2xl font-bold text-neutral-900 font-display">
             {mode === 'signin' ? 'Sign In' : 'Create Account'}
           </h2>
           <button

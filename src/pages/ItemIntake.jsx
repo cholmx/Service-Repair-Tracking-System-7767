@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { useServiceOrders } from '../hooks/useServiceOrders';
 import * as FiIcons from 'react-icons/fi';
 import SafeIcon from '../common/SafeIcon';
+import LoadingSkeleton from '../components/LoadingSkeleton';
 
 const { FiUser, FiPhone, FiMail, FiPackage, FiFileText, FiCalendar, FiSave, FiPlus, FiMinus, FiHome, FiHash, FiDollarSign } = FiIcons;
 
@@ -128,14 +129,7 @@ const ItemIntake = () => {
   const errorClasses = "border-red-300 focus:ring-red-500";
 
   if (serviceLoading) {
-    return (
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-500 mx-auto mb-4"></div>
-          <p className="text-neutral-600">Loading...</p>
-        </div>
-      </div>
-    );
+    return <LoadingSkeleton type="default" />;
   }
 
   return (

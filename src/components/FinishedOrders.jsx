@@ -17,9 +17,9 @@ const FinishedOrders = ({ items, onPrintReceipt }) => {
   };
 
   return (
-    <div className="bg-white rounded-xl shadow-lg p-6">
-      <div className="flex items-center justify-between mb-6">
-        <h3 className="text-lg font-semibold text-neutral-900">Finished Service Orders</h3>
+    <div className="bg-white rounded-xl shadow-lg p-4">
+      <div className="flex items-center justify-between mb-4">
+        <h3 className="text-base font-semibold text-neutral-900">Finished Service Orders</h3>
         <div className="flex items-center space-x-2">
           <span className="bg-neutral-100 text-neutral-800 px-2 py-1 rounded-full text-sm font-medium">
             {finishedItems.length} Completed
@@ -34,17 +34,17 @@ const FinishedOrders = ({ items, onPrintReceipt }) => {
           <p className="text-sm">Orders marked as "Completed" will appear here</p>
         </div>
       ) : (
-        <div className="space-y-4 max-h-96 overflow-y-auto">
+        <div className="space-y-3 max-h-64 overflow-y-auto">
           {finishedItems.map((item, index) => (
             <motion.div
               key={item.id}
               initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.3, delay: index * 0.1 }}
-              className="flex items-center justify-between p-4 border border-neutral-200 rounded-lg hover:bg-neutral-50 transition-colors duration-200"
+              className="flex items-center justify-between p-3 border border-neutral-200 rounded-lg hover:bg-neutral-50 transition-colors duration-200"
             >
               <div className="flex-1">
-                <div className="flex items-center space-x-3 mb-2">
+                <div className="flex items-center space-x-2 mb-1">
                   <span className="text-sm font-mono text-neutral-500">
                     #{item.id}
                   </span>

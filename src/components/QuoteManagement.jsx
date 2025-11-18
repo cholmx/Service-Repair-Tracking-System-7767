@@ -15,14 +15,14 @@ const QuoteManagement = ({ items }) => {
   const totalQuoteItems = needsQuoteItems.length + awaitingApprovalItems.length;
 
   return (
-    <div className="bg-white rounded-xl shadow-lg p-6">
-      <div className="flex items-center justify-between mb-6">
+    <div className="bg-white rounded-xl shadow-lg p-4">
+      <div className="flex items-center justify-between mb-4">
         <div className="flex items-center space-x-3">
           <div className="p-2 bg-purple-100 rounded-lg">
             <SafeIcon icon={FiDollarSign} className="text-purple-600 text-xl" />
           </div>
           <div>
-            <h3 className="text-lg font-semibold text-neutral-900">Quote Management</h3>
+            <h3 className="text-base font-semibold text-neutral-900">Quote Management</h3>
             <p className="text-sm text-neutral-600">Items requiring quotes or approval</p>
           </div>
         </div>
@@ -40,7 +40,7 @@ const QuoteManagement = ({ items }) => {
           <p className="text-sm">Items marked as "Needs Quote" will appear here</p>
         </div>
       ) : (
-        <div className="space-y-6">
+        <div className="space-y-4">
           {/* Items Needing Quotes */}
           {needsQuoteItems.length > 0 && (
             <div>
@@ -51,17 +51,17 @@ const QuoteManagement = ({ items }) => {
                   {needsQuoteItems.length}
                 </span>
               </div>
-              <div className="space-y-3">
+              <div className="space-y-2">
                 {needsQuoteItems.map((item, index) => (
                   <motion.div
                     key={item.id}
                     initial={{ opacity: 0, x: 20 }}
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ duration: 0.3, delay: index * 0.1 }}
-                    className="flex items-center justify-between p-3 bg-indigo-50 rounded-lg border border-indigo-200 hover:bg-indigo-100 transition-colors duration-200"
+                    className="flex items-center justify-between p-2.5 bg-indigo-50 rounded-lg border border-indigo-200 hover:bg-indigo-100 transition-colors duration-200"
                   >
                     <div className="flex-1">
-                      <div className="flex items-center space-x-3 mb-1">
+                      <div className="flex items-center space-x-2 mb-1">
                         <span className="text-sm font-mono text-neutral-500">
                           #{item.id}
                         </span>
@@ -97,7 +97,7 @@ const QuoteManagement = ({ items }) => {
                     </div>
                   </motion.div>
                 ))}
-                <div className="mt-3">
+                <div className="mt-2">
                   <Link
                     to="/tracking?filter=needs-quote"
                     className="text-sm text-indigo-600 hover:text-indigo-700 font-medium"
@@ -119,17 +119,17 @@ const QuoteManagement = ({ items }) => {
                   {awaitingApprovalItems.length}
                 </span>
               </div>
-              <div className="space-y-3">
+              <div className="space-y-2">
                 {awaitingApprovalItems.map((item, index) => (
                   <motion.div
                     key={item.id}
                     initial={{ opacity: 0, x: 20 }}
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ duration: 0.3, delay: index * 0.1 }}
-                    className="flex items-center justify-between p-3 bg-purple-50 rounded-lg border border-purple-200 hover:bg-purple-100 transition-colors duration-200"
+                    className="flex items-center justify-between p-2.5 bg-purple-50 rounded-lg border border-purple-200 hover:bg-purple-100 transition-colors duration-200"
                   >
                     <div className="flex-1">
-                      <div className="flex items-center space-x-3 mb-1">
+                      <div className="flex items-center space-x-2 mb-1">
                         <span className="text-sm font-mono text-neutral-500">
                           #{item.id}
                         </span>
@@ -172,7 +172,7 @@ const QuoteManagement = ({ items }) => {
                     </div>
                   </motion.div>
                 ))}
-                <div className="mt-3">
+                <div className="mt-2">
                   <Link
                     to="/tracking?filter=quote-approval"
                     className="text-sm text-purple-600 hover:text-purple-700 font-medium"

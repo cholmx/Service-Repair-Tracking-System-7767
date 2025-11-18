@@ -12,25 +12,25 @@ const RecentItems = ({ items }) => {
   const readyItems = items.filter(item => item.status === 'ready').slice(0, 5);
 
   return (
-    <div className="bg-white rounded-xl shadow-lg p-6">
-      <h3 className="text-lg font-semibold text-neutral-900 mb-6">Ready Service Orders</h3>
+    <div className="bg-white rounded-xl shadow-lg p-4">
+      <h3 className="text-base font-semibold text-neutral-900 mb-4">Ready Service Orders</h3>
       
       {readyItems.length === 0 ? (
         <div className="text-center py-8 text-neutral-500">
           <p>No Service Orders ready for pickup or delivery</p>
         </div>
       ) : (
-        <div className="space-y-4">
+        <div className="space-y-3">
           {readyItems.map((item, index) => (
             <motion.div
               key={item.id}
               initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.3, delay: index * 0.1 }}
-              className="flex items-center justify-between p-4 border border-neutral-200 rounded-lg hover:bg-neutral-50 transition-colors duration-200"
+              className="flex items-center justify-between p-3 border border-neutral-200 rounded-lg hover:bg-neutral-50 transition-colors duration-200"
             >
               <div className="flex-1">
-                <div className="flex items-center space-x-3 mb-2">
+                <div className="flex items-center space-x-2 mb-1">
                   <span className="text-sm font-mono text-neutral-500">
                     #{item.id}
                   </span>

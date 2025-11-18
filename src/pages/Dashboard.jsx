@@ -79,25 +79,27 @@ const Dashboard = ({ onPrintReceipt }) => {
               >
                 <RecentItems items={items} />
               </motion.div>
+            </div>
 
-              {/* Finished Orders */}
+            {/* Right Column - Quote Management and Finished Orders */}
+            <div className="space-y-4">
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.5, delay: 0.4 }}
               >
+                <QuoteManagement items={items} />
+              </motion.div>
+
+              {/* Finished Orders */}
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, delay: 0.5 }}
+              >
                 <FinishedOrders items={items} onPrintReceipt={onPrintReceipt} />
               </motion.div>
             </div>
-
-            {/* Right Column - Quote Management */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: 0.5 }}
-            >
-              <QuoteManagement items={items} />
-            </motion.div>
           </div>
         ) : (
           /* Layout without quotes: Single column with vertical stack */

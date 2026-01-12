@@ -20,17 +20,22 @@ export const PinAuthProvider = ({ children }) => {
   const [isLoading, setIsLoading] = useState(true);
 
   const checkSession = () => {
-    const stored = localStorage.getItem(STORAGE_KEY);
-    if (!stored) {
-      return false;
-    }
-
     try {
+      const stored = localStorage.getItem(STORAGE_KEY);
+      if (!stored) {
+        return false;
+      }
+
       const { timestamp } = JSON.parse(stored);
+      if (!timestamp || typeof timestamp !== 'number') {
+        localStorage.removeItem(STORAGE_KEY);
+        return false;
+      }
+
       const now = Date.now();
       const elapsed = now - timestamp;
 
-      if (elapsed < SESSION_DURATION) {
+      if (elapsed < SESSION_DURATION && elapsed >= 0) {
         return true;
       } else {
         localStorage.removeItem(STORAGE_KEY);
@@ -38,40 +43,93 @@ export const PinAuthProvider = ({ children }) => {
       }
     } catch (err) {
       console.error('Error checking session:', err);
-      localStorage.removeItem(STORAGE_KEY);
+      try {
+        localStorage.removeItem(STORAGE_KEY);
+      } catch (cleanupErr) {
+        console.error('Error cleaning up session:', cleanupErr);
+      }
       return false;
     }
   };
 
   useEffect(() => {
-    const isValid = checkSession();
-    setIsAuthenticated(isValid);
-    setIsLoading(false);
+    let mounted = true;
+
+    const initAuth = () => {
+      try {
+        const isValid = checkSession();
+        if (mounted) {
+          setIsAuthenticated(isValid);
+          setIsLoading(false);
+        }
+      } catch (err) {
+        console.error('Error initializing auth:', err);
+        if (mounted) {
+          setIsAuthenticated(false);
+          setIsLoading(false);
+        }
+      }
+    };
+
+    const timeoutId = setTimeout(() => {
+      if (mounted && isLoading) {
+        console.warn('Auth initialization timeout, forcing load complete');
+        setIsLoading(false);
+      }
+    }, 3000);
+
+    initAuth();
 
     const interval = setInterval(() => {
-      const stillValid = checkSession();
-      if (!stillValid && isAuthenticated) {
-        setIsAuthenticated(false);
+      if (mounted) {
+        const stillValid = checkSession();
+        if (!stillValid && isAuthenticated) {
+          setIsAuthenticated(false);
+        }
       }
     }, CHECK_INTERVAL);
 
-    return () => clearInterval(interval);
+    return () => {
+      mounted = false;
+      clearTimeout(timeoutId);
+      clearInterval(interval);
+    };
   }, [isAuthenticated]);
 
   const login = async (pin) => {
-    const result = await validatePin(pin);
+    try {
+      const timeoutPromise = new Promise((_, reject) =>
+        setTimeout(() => reject(new Error('Login timeout')), 10000)
+      );
 
-    if (result.isValid) {
-      const session = {
-        timestamp: Date.now(),
-        isOverride: result.isOverride || false
-      };
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(session));
-      setIsAuthenticated(true);
-      return { success: true };
+      const result = await Promise.race([
+        validatePin(pin),
+        timeoutPromise
+      ]);
+
+      if (result.isValid) {
+        const session = {
+          timestamp: Date.now(),
+          isOverride: result.isOverride || false
+        };
+        try {
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(session));
+        } catch (storageErr) {
+          console.error('Error saving session:', storageErr);
+          return { success: false, error: 'Unable to save session. Please try again.' };
+        }
+        setIsAuthenticated(true);
+        return { success: true };
+      }
+
+      return { success: false, error: result.error || 'Invalid PIN. Please try again.' };
+    } catch (err) {
+      console.error('Login error:', err);
+      if (err.message === 'Login timeout') {
+        return { success: false, error: 'Login timeout. Please check your connection and try again.' };
+      }
+      return { success: false, error: 'An unexpected error occurred. Please try again.' };
     }
-
-    return { success: false, error: result.error || 'Invalid PIN. Please try again.' };
   };
 
   const logout = () => {

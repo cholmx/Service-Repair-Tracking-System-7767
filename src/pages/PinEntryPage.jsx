@@ -40,6 +40,14 @@ const PinEntryPage = () => {
     if (error) setError('');
   };
 
+  const handleReset = () => {
+    if (window.confirm('This will clear all stored data and reload the page. Continue?')) {
+      localStorage.clear();
+      sessionStorage.clear();
+      window.location.reload();
+    }
+  };
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 to-slate-100">
       <div className="w-full max-w-md px-6">
@@ -91,9 +99,16 @@ const PinEntryPage = () => {
           </form>
 
           <div className="mt-6 pt-6 border-t border-slate-200">
-            <p className="text-xs text-slate-500 text-center">
+            <p className="text-xs text-slate-500 text-center mb-4">
               Your session will remain active for 10 hours after authentication
             </p>
+            <button
+              type="button"
+              onClick={handleReset}
+              className="w-full text-xs text-slate-400 hover:text-slate-600 transition-colors"
+            >
+              Having issues? Reset application
+            </button>
           </div>
         </div>
       </div>

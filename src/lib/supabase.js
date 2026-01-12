@@ -15,7 +15,16 @@ const supabaseClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
   global: {
     headers: {
       'X-Client-Info': 'servicetracker-app'
+    },
+    fetch: (url, options = {}) => {
+      return fetch(url, {
+        ...options,
+        signal: AbortSignal.timeout(10000)
+      });
     }
+  },
+  db: {
+    schema: 'public'
   }
 })
 

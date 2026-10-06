@@ -1,0 +1,2 @@
+[functions.verify-pin]
+verify_jwt = true

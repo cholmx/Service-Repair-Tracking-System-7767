@@ -19,7 +19,9 @@ test('customer names stand out and secondary text is dark enough to read', async
   // The item line under the name is gray text: it must be no lighter than #404040
   const itemLine = page.getByText('G1 SCBA').first()
   const [r, g, b] = (await itemLine.evaluate((el) => getComputedStyle(el).color)).match(/\d+/g).map(Number)
-  expect(Math.max(r, g, b)).toBeLessThanOrEqual(0x52)
+  expect(Math.max(r, g, b)).toBeLessThanOrEqual(0x40)
+  // and it is medium weight, so the details hold up next to the bold name
+  expect(await itemLine.evaluate((el) => getComputedStyle(el).fontWeight)).toBe('500')
 })
 
 test('a quote with no total yet does not print a stray 0', async ({ page }) => {

@@ -61,7 +61,7 @@ const QuoteManagement = ({ items }) => {
                   >
                     <div className="flex-1">
                       <div className="flex items-center space-x-2 mb-1">
-                        <span className="text-sm font-mono text-neutral-500">
+                        <span className="text-sm font-mono font-medium text-neutral-700">
                           #{item.id}
                         </span>
                         <StatusBadge status={item.status} />
@@ -69,15 +69,15 @@ const QuoteManagement = ({ items }) => {
                       {item.company ? (
                         <div>
                           <p className="font-bold text-neutral-900 text-sm">{item.company}</p>
-                          <p className="text-xs text-neutral-600">{item.customer_name}</p>
+                          <p className="text-xs font-medium text-neutral-800">{item.customer_name}</p>
                         </div>
                       ) : (
                         <p className="font-bold text-neutral-900 text-sm">{item.customer_name}</p>
                       )}
-                      <p className="text-xs text-neutral-600 capitalize">
+                      <p className="text-xs font-medium text-neutral-800 capitalize">
                         {item.quantity}x {item.item_type}
                       </p>
-                      <div className="flex items-center text-xs text-neutral-500 mt-1">
+                      <div className="flex items-center text-xs font-medium text-neutral-700 mt-1">
                         <SafeIcon icon={FiClock} className="mr-1" />
                         {new Date(item.created_at).toLocaleDateString()}
                       </div>
@@ -129,7 +129,7 @@ const QuoteManagement = ({ items }) => {
                   >
                     <div className="flex-1">
                       <div className="flex items-center space-x-2 mb-1">
-                        <span className="text-sm font-mono text-neutral-500">
+                        <span className="text-sm font-mono font-medium text-neutral-700">
                           #{item.id}
                         </span>
                         <StatusBadge status={item.status} />
@@ -137,16 +137,16 @@ const QuoteManagement = ({ items }) => {
                       {item.company ? (
                         <div>
                           <p className="font-bold text-neutral-900 text-sm">{item.company}</p>
-                          <p className="text-xs text-neutral-600">{item.customer_name}</p>
+                          <p className="text-xs font-medium text-neutral-800">{item.customer_name}</p>
                         </div>
                       ) : (
                         <p className="font-bold text-neutral-900 text-sm">{item.customer_name}</p>
                       )}
-                      <p className="text-xs text-neutral-600 capitalize">
+                      <p className="text-xs font-medium text-neutral-800 capitalize">
                         {item.quantity}x {item.item_type}
                       </p>
                       <div className="flex items-center justify-between mt-1">
-                        <div className="flex items-center text-xs text-neutral-500">
+                        <div className="flex items-center text-xs font-medium text-neutral-700">
                           <SafeIcon icon={FiClock} className="mr-1" />
                           {new Date(item.updated_at || item.created_at).toLocaleDateString()}
                         </div>

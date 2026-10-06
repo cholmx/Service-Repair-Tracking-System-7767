@@ -44,7 +44,7 @@ const FinishedOrders = ({ items, onPrintReceipt }) => {
             >
               <div className="flex-1">
                 <div className="flex items-center space-x-2 mb-1">
-                  <span className="text-sm font-mono text-neutral-500">
+                  <span className="text-sm font-mono font-medium text-neutral-700">
                     #{item.id}
                   </span>
                   <StatusBadge status={item.status} />
@@ -52,17 +52,17 @@ const FinishedOrders = ({ items, onPrintReceipt }) => {
                 
                 {item.company ? (
                   <p className="font-bold text-neutral-900">
-                    {item.company} <span className="text-neutral-600 font-normal">• {item.customer_name}</span>
+                    {item.company} <span className="text-neutral-800 font-medium">• {item.customer_name}</span>
                   </p>
                 ) : (
                   <p className="font-bold text-neutral-900">{item.customer_name}</p>
                 )}
                 
-                <p className="text-sm text-neutral-600 capitalize">
+                <p className="text-sm font-medium text-neutral-800 capitalize">
                   {item.quantity}x {item.item_type}
                 </p>
                 
-                <div className="flex items-center text-xs text-neutral-500 mt-1">
+                <div className="flex items-center text-xs font-medium text-neutral-700 mt-1">
                   <SafeIcon icon={FiClock} className="mr-1" />
                   {new Date(item.updated_at || item.created_at).toLocaleDateString()}
                 </div>

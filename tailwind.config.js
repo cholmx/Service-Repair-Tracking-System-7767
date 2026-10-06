@@ -30,9 +30,9 @@ export default {
           300: '#d4d4d4',
           // The grays used for secondary text, one step darker than Tailwind's defaults so they stay
           // readable on the light gray page background.
-          400: '#737373',
-          500: '#525252',
-          600: '#404040',
+          400: '#666666',
+          500: '#404040',
+          600: '#2e2e2e',
           700: '#404040',
           800: '#262626',
           900: '#171717',

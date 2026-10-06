@@ -31,12 +31,12 @@ const OrderRow = ({ order, index, showArchived, onArchive, onDelete }) => (
         {order.company ? (
           <>
             <div className="text-sm font-bold text-neutral-900">{order.company}</div>
-            <div className="text-sm text-neutral-500">{order.customer_name}</div>
+            <div className="text-sm font-medium text-neutral-700">{order.customer_name}</div>
           </>
         ) : (
           <div className="text-sm font-bold text-neutral-900">{order.customer_name}</div>
         )}
-        <div className="text-sm text-neutral-500">{order.customer_phone}</div>
+        <div className="text-sm font-medium text-neutral-700">{order.customer_phone}</div>
       </div>
     </td>
     <td className="px-6 py-4">
@@ -45,7 +45,7 @@ const OrderRow = ({ order, index, showArchived, onArchive, onDelete }) => (
           {order.quantity}x {order.item_type}
         </div>
         {order.serial_number && (
-          <div className="flex items-center text-sm text-neutral-500">
+          <div className="flex items-center text-sm font-medium text-neutral-700">
             <SafeIcon icon={FiHash} className="mr-1 text-xs" />
             {scbaHistoryLink(order) ? (
               <Link to={scbaHistoryLink(order)} className="text-primary-600 hover:text-primary-700 underline" title="SCBA repair history">
@@ -56,13 +56,13 @@ const OrderRow = ({ order, index, showArchived, onArchive, onDelete }) => (
             )}
           </div>
         )}
-        <div className="text-sm text-neutral-500 line-clamp-2">{order.description}</div>
+        <div className="text-sm font-medium text-neutral-700 line-clamp-2">{order.description}</div>
       </div>
     </td>
     <td className="px-6 py-4 whitespace-nowrap">
       <StatusBadge status={order.status} />
     </td>
-    <td className="px-6 py-4 whitespace-nowrap text-sm text-neutral-500">
+    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-neutral-700">
       {new Date(showArchived ? order.archived_at : order.created_at).toLocaleDateString()}
     </td>
     <td className="px-6 py-4 whitespace-nowrap">

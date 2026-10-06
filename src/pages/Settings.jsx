@@ -5,7 +5,6 @@ import SafeIcon from '../common/SafeIcon';
 import { useServiceOrders } from '../hooks/useServiceOrders';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
-import { updatePin } from '../services/pinService';
 import { usePinAuth } from '../contexts/PinAuthContext';
 
 const { FiDownload, FiUpload, FiSettings, FiArchive, FiCheck, FiAlertCircle, FiInfo, FiDatabase, FiLock } = FiIcons;
@@ -18,9 +17,6 @@ const Settings = () => {
   const [message, setMessage] = useState({ type: '', text: '' });
   const [exportIncludeArchived, setExportIncludeArchived] = useState(true);
   const [importFile, setImportFile] = useState(null);
-  const [pinData, setPinData] = useState({ newPin: '', confirmPin: '' });
-  const [pinMessage, setPinMessage] = useState({ type: '', text: '' });
-  const [pinLoading, setPinLoading] = useState(false);
 
   // Format date for filenames
   const getFormattedDate = () => {
@@ -259,37 +255,6 @@ const Settings = () => {
     }
   };
 
-  const handlePinUpdate = async (e) => {
-    e.preventDefault();
-    setPinLoading(true);
-    setPinMessage({ type: '', text: '' });
-
-    try {
-      const result = await updatePin(pinData.newPin, pinData.confirmPin);
-
-      if (result.success) {
-        setPinMessage({
-          type: 'success',
-          text: 'PIN updated successfully!'
-        });
-        setPinData({ newPin: '', confirmPin: '' });
-      } else {
-        setPinMessage({
-          type: 'error',
-          text: result.error || 'Failed to update PIN'
-        });
-      }
-    } catch (error) {
-      console.error('PIN update error:', error);
-      setPinMessage({
-        type: 'error',
-        text: 'An unexpected error occurred while updating PIN'
-      });
-    } finally {
-      setPinLoading(false);
-    }
-  };
-
   const formatSessionTime = () => {
     const sessionInfo = getSessionInfo();
     if (!sessionInfo) return 'Session expired';
@@ -430,82 +395,11 @@ const Settings = () => {
             <h2 className="text-xl font-semibold text-neutral-900">PIN Security</h2>
           </div>
 
-          {pinMessage.text && (
-            <div className={`mb-6 p-4 rounded-lg flex items-center ${
-              pinMessage.type === 'success' ? 'bg-green-50 text-green-800' :
-              pinMessage.type === 'error' ? 'bg-red-50 text-red-800' : 'bg-blue-50 text-blue-800'
-            }`}>
-              <SafeIcon
-                icon={pinMessage.type === 'success' ? FiCheck : FiAlertCircle}
-                className="mr-3 text-lg"
-              />
-              <p>{pinMessage.text}</p>
-            </div>
-          )}
-
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            <div className="border border-neutral-200 rounded-lg p-6">
-              <h3 className="text-lg font-medium mb-4">Update Application PIN</h3>
-              <p className="text-neutral-600 mb-6">
-                Change the PIN used to access the application. The new PIN must be at least 4 digits.
-              </p>
-
-              <form onSubmit={handlePinUpdate} className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-neutral-700 mb-2">
-                    New PIN
-                  </label>
-                  <input
-                    type="password"
-                    inputMode="numeric"
-                    pattern="[0-9]*"
-                    value={pinData.newPin}
-                    onChange={(e) => {
-                      const value = e.target.value.replace(/\D/g, '');
-                      setPinData({ ...pinData, newPin: value });
-                      if (pinMessage.text) setPinMessage({ type: '', text: '' });
-                    }}
-                    placeholder="Enter new PIN"
-                    className="w-full px-4 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                    maxLength={10}
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-neutral-700 mb-2">
-                    Confirm New PIN
-                  </label>
-                  <input
-                    type="password"
-                    inputMode="numeric"
-                    pattern="[0-9]*"
-                    value={pinData.confirmPin}
-                    onChange={(e) => {
-                      const value = e.target.value.replace(/\D/g, '');
-                      setPinData({ ...pinData, confirmPin: value });
-                      if (pinMessage.text) setPinMessage({ type: '', text: '' });
-                    }}
-                    placeholder="Confirm new PIN"
-                    className="w-full px-4 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                    maxLength={10}
-                  />
-                </div>
-
-                <button
-                  type="submit"
-                  disabled={pinLoading || !pinData.newPin || !pinData.confirmPin}
-                  className="w-full flex items-center justify-center px-4 py-2 bg-primary-500 text-white rounded-lg hover:bg-primary-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
-                >
-                  <SafeIcon icon={FiLock} className="mr-2" />
-                  {pinLoading ? 'Updating...' : 'Update PIN'}
-                </button>
-              </form>
-            </div>
-
+          <div className="grid grid-cols-1 gap-8">
             <div className="border border-neutral-200 rounded-lg p-6">
               <h3 className="text-lg font-medium mb-4">Session Information</h3>
               <p className="text-neutral-600 mb-6">
-                Your current session details and PIN security information.
+                Your current session details. PINs are set as server environment variables.
               </p>
 
               <div className="space-y-4">
@@ -523,16 +417,6 @@ const Settings = () => {
                 </div>
               </div>
 
-              <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-                <div className="flex">
-                  <SafeIcon icon={FiInfo} className="text-blue-600 mt-1 mr-3 flex-shrink-0" />
-                  <div>
-                    <p className="text-sm text-blue-700">
-                      An override PIN is configured for administrative access. Regular users should use the standard PIN that can be updated here.
-                    </p>
-                  </div>
-                </div>
-              </div>
             </div>
           </div>
         </div>

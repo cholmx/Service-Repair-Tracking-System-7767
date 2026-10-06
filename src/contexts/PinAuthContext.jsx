@@ -110,7 +110,7 @@ export const PinAuthProvider = ({ children }) => {
       if (result.isValid) {
         const session = {
           timestamp: Date.now(),
-          isOverride: result.isOverride || false
+          isOverride: false
         };
         try {
           localStorage.setItem(STORAGE_KEY, JSON.stringify(session));

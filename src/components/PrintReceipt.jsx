@@ -68,7 +68,7 @@ const PrintReceipt = ({ item, onClose }) => {
           <div className="text-center mb-4 print:mb-3">
             <div className="flex items-center justify-center space-x-2 mb-1">
               <SafeIcon icon={FiTool} className="text-2xl print:text-lg text-primary-500" />
-              <h1 className="text-xl print:text-lg font-bold text-neutral-900 font-display">ServiceTracker</h1>
+              <h1 className="text-xl print:text-lg font-bold text-neutral-900 font-display">Fire Force</h1>
             </div>
             <p className="text-neutral-600 text-sm print:text-xs">
               {isQuoteApproval ? 'Service Quote - Approval Required' : 'Repair Service Receipt'}

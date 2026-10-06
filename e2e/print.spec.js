@@ -30,6 +30,8 @@ test('printing shows only the receipt, on one page', async ({ page }) => {
   await expect(page.locator('.print-receipt')).toBeVisible()
   await expect(page.getByRole('button', { name: 'Print', exact: true })).toBeHidden()
   await expect(page.locator('.print-receipt')).toContainText('$221.40')
+  await expect(page.locator('.print-receipt h1')).toHaveText('Fire Force')
+  await expect(page.locator('.print-receipt')).not.toContainText('ServiceTracker')
 
   const pdf = await page.pdf({ format: 'Letter', preferCSSPageSize: true })
   const pages = pdf.toString('latin1').match(/\/Type\s*\/Page[^s]/g) || []

@@ -30,6 +30,23 @@ describe('normalizeSerial', () => {
     expect(normalizeSerial('SN/4471.')).toBe('SN4471')
   })
 
+  it('treats a stray letter or two in front of a long serial as the same unit', () => {
+    expect(normalizeSerial('e00401508eae6af7')).toBe('00401508EAE6AF7')
+    expect(normalizeSerial('00401508EAE6AF7')).toBe('00401508EAE6AF7')
+    expect(normalizeSerial('E00401508EAE6AF7')).toBe(normalizeSerial('00401508eae6af7'))
+    expect(normalizeSerial('AB-12345678')).toBe('12345678')
+  })
+
+  it('leaves short serials, longer prefixes and letters inside the number alone', () => {
+    expect(normalizeSerial('SN4471')).toBe('SN4471')
+    expect(normalizeSerial('XY4471')).toBe('XY4471')
+    expect(normalizeSerial('E1234567')).toBe('E1234567') // only 7 characters after the letter
+    expect(normalizeSerial('ABC12345678')).toBe('ABC12345678') // three letters
+    expect(normalizeSerial('E00401508EAE6AF7X')).toBe('00401508EAE6AF7X')
+    expect(normalizeSerial('EA00401508')).toBe('00401508')
+    expect(normalizeSerial('12345678A')).toBe('12345678A')
+  })
+
   it('returns null when nothing is left', () => {
     expect(normalizeSerial('')).toBeNull()
     expect(normalizeSerial('  - ')).toBeNull()
@@ -55,7 +72,10 @@ describe('serial_key in the database', () => {
   }
 
   it('agrees with normalizeSerial for every kind of input', async () => {
-    const samples = ['sn-4471', ' SN 4471 ', 'SN/4471.', 'abc 123 def', '000123', 'a-b_c.d e', '12 34', '', '   ', '--', null]
+    const samples = [
+      'sn-4471', ' SN 4471 ', 'SN/4471.', 'abc 123 def', '000123', 'a-b_c.d e', '12 34', '', '   ', '--', null,
+      'e00401508eae6af7', '00401508EAE6AF7', 'E-0040 1508', 'AB-12345678', 'ABC12345678', 'E1234567', 'EA00401508', '12345678A', 'E00401508EAE6AF7X'
+    ]
     for (const sample of samples) {
       expect(await key(sample)).toBe(normalizeSerial(sample))
     }

@@ -93,7 +93,7 @@ Lines with `isWarranty: true` are not charged.
 
 Repair history is kept for SCBAs only. Each order has an `is_scba` flag. Item types are typed freely ("G1 SCBA", "FIREHAWK", "G1 SBCA"), so the flag is guessed from the item type by `looks_like_scba()` (SCBA or the typo SBCA, FireHawk, and the G1 and M7 models), shown as a checkbox on the intake form and the edit screen, and can be corrected on any order. Gas detectors (Altair, Sensit), loose face pieces and cylinders are not guessed to be SCBAs. The same rule is in `src/utils/scba.js`, and a test checks the SQL and JavaScript agree.
 
-Units are matched by `serial_key`, the serial number with only letters and digits in capitals, so `sn-4471`, `SN 4471` and `SN4471` are one unit. A repeat repair is an SCBA that returns within 90 days of a finished repair (`REPEAT_WINDOW_DAYS` in `src/utils/serial.js`).
+Units are matched by `serial_key`, the serial number with only letters and digits in capitals, so `sn-4471`, `SN 4471` and `SN4471` are one unit. One or two stray letters in front of a long serial (at least 8 characters after them, starting with a digit) are ignored too, so `e00401508eae6af7` and `00401508EAE6AF7` match. Short serials such as `SN4471` are left alone. Every order keeps its serial exactly as typed and the history shows it. A repeat repair is an SCBA that returns within 90 days of a finished repair (`REPEAT_WINDOW_DAYS` in `src/utils/serial.js`).
 
 ### Backups
 

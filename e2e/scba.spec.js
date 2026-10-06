@@ -50,6 +50,30 @@ test.describe('SCBA repair history page', () => {
     await expect(timeline.getByText(/Repeat:/)).toHaveCount(1)
   })
 
+  test('treats the same serial typed with a stray leading letter as one unit', async ({ page }) => {
+    await installBackend(page, {
+      orders: [],
+      archived: [
+        makeOrder({ id: '129', item_type: 'SCBA', serial_number: 'e00401508eae6af7', status: 'archived', archived_at: ago(60), created_at: ago(65), status_history: finished('129', 62), customer_name: 'Steve', company: 'BATH', description: 'CON. MOD STUCK GAUGE' }),
+        makeOrder({ id: '150', item_type: 'G1 SCBA', serial_number: '00401508EAE6AF7', status: 'archived', archived_at: ago(5), created_at: ago(20), status_history: finished('150', 8), customer_name: 'Bath FD', company: null, description: 'Low air alarm' })
+      ]
+    })
+    await login(page)
+    await page.goto('/#/scba')
+    await page.getByPlaceholder(/Serial number/).fill('6AF7')
+
+    const unit = page.getByRole('button', { name: /2 repairs/ })
+    await expect(unit).toBeVisible()
+    await expect(page.getByRole('button', { name: /1 repair\b/ })).toHaveCount(0)
+    await unit.click()
+
+    await expect(page.getByText('2 repairs on record')).toBeVisible()
+    // each order shows the serial exactly as it was typed, so a merge is never hidden
+    await expect(page.getByText('Serial as entered: e00401508eae6af7')).toBeVisible()
+    await expect(page.getByText('Serial as entered: 00401508EAE6AF7')).toBeVisible()
+    await expect(page.getByText(/Repeat: 42 days after the previous repair/)).toBeVisible()
+  })
+
   test('says so when there is nothing to find', async ({ page }) => {
     await installBackend(page, fleet())
     await login(page)

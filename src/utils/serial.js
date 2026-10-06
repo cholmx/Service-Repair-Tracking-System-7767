@@ -9,10 +9,15 @@ export const MIN_SERIAL_CHARS = 3
 const FINISHED = ['ready', 'completed', 'archived']
 const CLOSED = ['completed', 'archived']
 
-// Must match the serial_key column in 20261007000000_serial_key.sql: keep letters and digits,
-// then capitalize. Returns null when nothing is left.
+// Must match the serial_key column in 20261007010000_serial_key_prefix.sql. Keep letters and digits,
+// capitalize, and drop one or two stray letters at the very front when a digit follows and at least
+// 8 characters remain (so e00401508eae6af7 and 00401508EAE6AF7 are the same unit, while the short
+// SN4471 stays as it is). Returns null when nothing is left.
 export const normalizeSerial = (serial) =>
-  (serial || '').replace(/[^A-Za-z0-9]/g, '').toUpperCase() || null
+  (serial || '')
+    .replace(/[^A-Za-z0-9]/g, '')
+    .toUpperCase()
+    .replace(/^[A-Z]{1,2}([0-9][A-Z0-9]{7,})$/, '$1') || null
 
 export const isOpen = (order) => !CLOSED.includes(order.status)
 

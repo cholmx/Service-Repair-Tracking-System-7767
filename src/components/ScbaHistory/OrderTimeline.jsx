@@ -33,6 +33,7 @@ const OrderTimeline = ({ orders }) => (
         <p className="text-sm text-neutral-700 mb-1">
           {order.company ? `${order.company} (${order.customer_name})` : order.customer_name} · {order.item_type}
         </p>
+        <p className="text-xs text-neutral-500 mb-1">Serial as entered: {order.serial_number}</p>
         <p className="text-neutral-900">{order.description}</p>
         {partsSummary(order.parts) && <p className="mt-2 text-sm text-neutral-600">Parts: {partsSummary(order.parts)}</p>}
         {order.labor?.length > 0 && (

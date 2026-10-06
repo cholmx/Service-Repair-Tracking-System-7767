@@ -1,13 +1,5 @@
-import { readFileSync, readdirSync } from 'node:fs'
-import { join } from 'node:path'
 import { beforeAll, beforeEach, describe, expect, it } from 'vitest'
-import { PGlite } from '@electric-sql/pglite'
-
-const migrationsDir = join(import.meta.dirname, '..', 'supabase', 'migrations')
-const migrations = readdirSync(migrationsDir)
-  .filter((file) => file.endsWith('.sql'))
-  .sort()
-  .map((file) => readFileSync(join(migrationsDir, file), 'utf8'))
+import { createDb, migrations } from './helpers/db'
 
 let db
 
@@ -35,10 +27,7 @@ const baseOrder = (items) => ({
 const widget = { item_type: 'Widget', quantity: 1, description: 'Broken' }
 
 beforeAll(async () => {
-  db = new PGlite()
-  for (const sql of migrations) {
-    await db.exec(sql)
-  }
+  db = await createDb()
 }, 60000)
 
 beforeEach(async () => {

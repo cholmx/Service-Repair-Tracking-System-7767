@@ -19,7 +19,8 @@ const ORDER_COLUMNS = [
   'labor',
   'tax_rate',
   'archived_at',
-  'created_at'
+  'created_at',
+  'is_scba'
 ]
 
 // Shapes an order loaded in the app into the row import_service_orders() expects.

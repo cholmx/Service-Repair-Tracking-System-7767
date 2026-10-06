@@ -1,7 +1,9 @@
 import React from 'react';
 import { FiEdit3, FiHash, FiPackage } from 'react-icons/fi';
 import SafeIcon from '../../common/SafeIcon';
+import { Link } from 'react-router-dom';
 import { inputClasses } from './styles';
+import { scbaHistoryLink } from '../../utils/serial';
 
 
 export const EditButton = ({ onClick }) => (
@@ -36,6 +38,7 @@ const OrderInfoCard = ({
         <div>
           <span className="text-sm text-neutral-500">Service Order:</span>
           {isEditingCustomer ? (
+            <>
             <div className="flex items-center mt-1 space-x-2">
               <input
                 type="number"
@@ -53,8 +56,23 @@ const OrderInfoCard = ({
                 placeholder="Item type"
               />
             </div>
+            <label className="flex items-center mt-2 text-sm text-neutral-700">
+              <input
+                type="checkbox"
+                checked={Boolean(customerEditData.is_scba)}
+                onChange={(e) => onCustomerField('is_scba', e.target.checked)}
+                className="mr-2 h-4 w-4 text-primary-500 rounded border-neutral-300 focus:ring-primary-500"
+              />
+              SCBA (keep repair history for this unit)
+            </label>
+            </>
           ) : (
-            <p className="font-medium">{item.quantity}x {item.item_type}</p>
+            <p className="font-medium">
+              {item.quantity}x {item.item_type}
+              {item.is_scba && (
+                <span className="ml-2 inline-flex px-2 py-0.5 rounded-full text-xs font-medium bg-primary-100 text-primary-800 align-middle">SCBA</span>
+              )}
+            </p>
           )}
         </div>
       </div>
@@ -79,7 +97,17 @@ const OrderInfoCard = ({
               placeholder="Enter serial number"
             />
           ) : (
-            <p className="font-medium">{item.serial_number || 'Not specified'}</p>
+            item.serial_number ? (
+              scbaHistoryLink(item) ? (
+                <Link to={scbaHistoryLink(item)} className="font-medium text-primary-600 hover:text-primary-700 underline">
+                  {item.serial_number}
+                </Link>
+              ) : (
+                <p className="font-medium">{item.serial_number}</p>
+              )
+            ) : (
+              <p className="font-medium">Not specified</p>
+            )
           )}
         </div>
       </div>

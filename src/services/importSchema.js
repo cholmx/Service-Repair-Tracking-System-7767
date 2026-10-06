@@ -1,5 +1,6 @@
 import { z } from 'zod'
 import { ALL_STATUSES } from '../constants/statuses'
+import { looksLikeScba } from '../utils/scba'
 
 export const MAX_IMPORT_ORDERS = 2000
 
@@ -75,6 +76,7 @@ const orderSchema = z
       .max(100)
       .nullish()
       .transform((value) => value ?? 0),
+    is_scba: z.boolean().nullish(),
     archived_at: optionalTimestamp,
     created_at: optionalTimestamp,
     statusHistory: history,
@@ -82,6 +84,8 @@ const orderSchema = z
   })
   .transform(({ statusHistory, status_history, ...order }) => ({
     ...order,
+    // Files from before the SCBA flag existed get the same guess the database would make.
+    is_scba: order.is_scba ?? looksLikeScba(order.item_type),
     history: statusHistory ?? status_history ?? []
   }))
 

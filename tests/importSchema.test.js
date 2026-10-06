@@ -88,6 +88,18 @@ describe('parseImportFile', () => {
     expect(orders[0]).toMatchObject({ id: '607', customer_email: null, urgency: 'normal', tax_rate: 0 })
   })
 
+  it('keeps the SCBA flag, and guesses it for older files that lack it', () => {
+    const { orders } = parseImportFile(
+      file([
+        order({ id: '1', item_type: 'ALTAIR 4X', is_scba: true }),
+        order({ id: '2', item_type: 'G1 SCBA' }),
+        order({ id: '3', item_type: 'ALTAIR 4X' }),
+        order({ id: '4', item_type: 'G1 SCBA', is_scba: false })
+      ])
+    )
+    expect(orders.map((o) => o.is_scba)).toEqual([true, true, false, false])
+  })
+
   it('ignores totals carried in the file', () => {
     const { orders } = parseImportFile(file([order({ total: 99999, parts_total: 5 })]))
     expect(orders[0].total).toBeUndefined()

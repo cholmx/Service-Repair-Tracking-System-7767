@@ -6,6 +6,8 @@ import { FiCalendar, FiDollarSign, FiFileText, FiHash, FiHome, FiMail, FiMinus, 
 import SafeIcon from '../common/SafeIcon';
 import LoadingSkeleton from '../components/LoadingSkeleton';
 import CustomerInput from '../components/CustomerInput';
+import SerialNotice from '../components/ScbaHistory/SerialNotice';
+import { looksLikeScba } from '../utils/scba';
 
 
 const ItemIntake = () => {
@@ -17,7 +19,7 @@ const ItemIntake = () => {
     customerEmail: '',
     company: '',
     items: [
-      { itemType: '', quantity: 1, serialNumber: '', description: '', needsQuote: false }
+      { itemType: '', quantity: 1, serialNumber: '', description: '', needsQuote: false, isScba: false, scbaTouched: false }
     ],
     urgency: 'normal',
     expectedCompletion: ''
@@ -48,6 +50,10 @@ const ItemIntake = () => {
   const handleItemChange = (index, field, value) => {
     const newItems = [...formData.items];
     newItems[index] = { ...newItems[index], [field]: value };
+    // The SCBA box follows the item type until someone ticks or unticks it themselves
+    if (field === 'itemType' && !newItems[index].scbaTouched) {
+      newItems[index].isScba = looksLikeScba(value);
+    }
     setFormData(prev => ({ ...prev, items: newItems }));
     
     // Clear errors for this item
@@ -55,6 +61,12 @@ const ItemIntake = () => {
     if (errors[errorKey]) {
       setErrors(prev => ({ ...prev, [errorKey]: '' }));
     }
+  };
+
+  const toggleScba = (index) => {
+    const newItems = [...formData.items];
+    newItems[index] = { ...newItems[index], isScba: !newItems[index].isScba, scbaTouched: true };
+    setFormData(prev => ({ ...prev, items: newItems }));
   };
 
   const toggleNeedsQuote = (index) => {
@@ -71,7 +83,7 @@ const ItemIntake = () => {
       ...prev,
       items: [
         ...prev.items,
-        { itemType: '', quantity: 1, serialNumber: '', description: '', needsQuote: false }
+        { itemType: '', quantity: 1, serialNumber: '', description: '', needsQuote: false, isScba: false, scbaTouched: false }
       ]
     }));
   };
@@ -307,6 +319,16 @@ const ItemIntake = () => {
                       className={inputClasses}
                       placeholder="Enter serial number (optional)"
                     />
+                    <label className="flex items-center mt-2 text-sm text-neutral-700">
+                      <input
+                        type="checkbox"
+                        checked={item.isScba}
+                        onChange={() => toggleScba(index)}
+                        className="mr-2 h-4 w-4 text-primary-500 rounded border-neutral-300 focus:ring-primary-500"
+                      />
+                      SCBA (keep repair history for this unit)
+                    </label>
+                    <SerialNotice serial={item.serialNumber} isScba={item.isScba} />
                   </div>
                   <div className="mb-4">
                     <label className="flex items-center text-sm font-medium text-neutral-700 mb-2">

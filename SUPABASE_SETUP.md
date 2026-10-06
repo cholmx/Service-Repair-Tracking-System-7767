@@ -44,6 +44,10 @@ A trigger on `service_orders` recomputes the money columns from `parts`, `labor`
 
 All migrations are safe to re-run. Apply them in order. The two function migrations must be applied before deploying a version of the app that calls them.
 
+## SCBA repair history
+
+`20261007000000_serial_key.sql` adds `serial_key`, a column the database calculates from the serial number. `20261007000100_scba_flag.sql` adds the `is_scba` flag, flags existing orders from their item type once, adds an index for serial lookups, and replaces the order, update and import functions so they carry the flag. Apply them in this order, after the backup migrations. Check the flags afterwards in Settings or on the SCBA History page; anything that was guessed wrong can be changed on the order. Re-running the migration does not undo your corrections.
+
 ## Weekly backups
 
 `20261006150000_backups.sql` creates the backup table and functions. `20261006150100_schedule_weekly_backup.sql` schedules the job with `pg_cron` for Sundays at 09:00 UTC (about 4 or 5 in the morning in the US) and keeps the newest 12.

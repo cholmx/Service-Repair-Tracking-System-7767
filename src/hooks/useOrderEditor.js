@@ -85,7 +85,8 @@ export const useOrderEditor = (item, updateItem) => {
       item_type: item.item_type,
       quantity: item.quantity,
       description: item.description,
-      serial_number: item.serial_number || ''
+      serial_number: item.serial_number || '',
+      is_scba: Boolean(item.is_scba)
     })
   }
 
@@ -108,7 +109,8 @@ export const useOrderEditor = (item, updateItem) => {
         item_type: customerEditData.item_type,
         quantity: customerEditData.quantity,
         description: customerEditData.description,
-        serial_number: customerEditData.serial_number || null
+        serial_number: customerEditData.serial_number || null,
+        is_scba: Boolean(customerEditData.is_scba)
       })
       setCustomerEditData(null)
     } catch (error) {

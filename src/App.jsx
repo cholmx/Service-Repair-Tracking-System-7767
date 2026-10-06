@@ -14,6 +14,7 @@ const ItemIntake = lazy(() => import('./pages/ItemIntake'))
 const TrackingView = lazy(() => import('./pages/TrackingView'))
 const ItemDetails = lazy(() => import('./pages/ItemDetails'))
 const Settings = lazy(() => import('./pages/Settings'))
+const ScbaHistory = lazy(() => import('./pages/ScbaHistory'))
 const PinEntryPage = lazy(() => import('./pages/PinEntryPage'))
 
 // Contexts
@@ -68,6 +69,7 @@ const ProtectedApp = () => {
               <Route path="/intake" element={<ItemIntake />} />
               <Route path="/tracking" element={<TrackingView />} />
               <Route path="/item/:id" element={<ItemDetails onPrintReceipt={handlePrintReceipt} />} />
+              <Route path="/scba" element={<ScbaHistory />} />
               <Route path="/settings" element={<Settings />} />
             </Routes>
           </Suspense>

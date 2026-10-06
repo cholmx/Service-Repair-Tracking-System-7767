@@ -59,7 +59,8 @@ export const createOrders = async (formData) => {
       serial_number: item.serialNumber || null,
       quantity: item.quantity,
       description: item.description,
-      needs_quote: Boolean(item.needsQuote)
+      needs_quote: Boolean(item.needsQuote),
+      is_scba: Boolean(item.isScba)
     }))
   }
 

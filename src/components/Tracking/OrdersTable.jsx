@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { FiArchive, FiEye, FiHash, FiTrash2 } from 'react-icons/fi';
 import SafeIcon from '../../common/SafeIcon';
+import { scbaHistoryLink } from '../../utils/serial';
 import StatusBadge from '../StatusBadge';
 
 const headerCell = 'px-6 py-4 text-left text-xs font-medium text-neutral-700 uppercase tracking-wider';
@@ -46,7 +47,13 @@ const OrderRow = ({ order, index, showArchived, onArchive, onDelete }) => (
         {order.serial_number && (
           <div className="flex items-center text-sm text-neutral-500">
             <SafeIcon icon={FiHash} className="mr-1 text-xs" />
-            <span>{order.serial_number}</span>
+            {scbaHistoryLink(order) ? (
+              <Link to={scbaHistoryLink(order)} className="text-primary-600 hover:text-primary-700 underline" title="SCBA repair history">
+                {order.serial_number}
+              </Link>
+            ) : (
+              <span>{order.serial_number}</span>
+            )}
           </div>
         )}
         <div className="text-sm text-neutral-500 line-clamp-2">{order.description}</div>

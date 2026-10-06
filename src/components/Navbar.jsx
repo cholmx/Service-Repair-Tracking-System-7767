@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { FiHome, FiMenu, FiPlus, FiSearch, FiSettings, FiTool, FiX } from 'react-icons/fi';
+import { FiClock, FiHome, FiMenu, FiPlus, FiSearch, FiSettings, FiTool, FiX } from 'react-icons/fi';
 import SafeIcon from '../common/SafeIcon';
 
 
@@ -13,6 +13,7 @@ const Navbar = () => {
     { path: '/dashboard', label: 'Dashboard', icon: FiHome },
     { path: '/intake', label: 'New Service Order', icon: FiPlus },
     { path: '/tracking', label: 'Track Service Orders', icon: FiSearch },
+    { path: '/scba', label: 'SCBA History', icon: FiClock },
     { path: '/settings', label: 'Settings', icon: FiSettings }
   ];
 

@@ -13,6 +13,7 @@ A service order management system for repair shops, built with React and Supabas
 - **Archive**: move finished orders out of the way. Archived orders load only when you open them.
 - **Backup and restore**: export everything to JSON, and import it back after a preview and PIN confirmation.
 - **Automatic weekly backups**: the database saves a snapshot every Sunday and keeps the last 12. Settings lists them with Download and Restore, and warns if the schedule stops.
+- **SCBA repair history**: every SCBA order is flagged, and the shop can look up all the repairs ever done on one unit by serial number. An SCBA's order page shows its other repairs, and the intake form warns when the same serial already has an open order or was repaired in the last 90 days. Other equipment keeps no history.
 - **Returning customers**: typing a name or phone on the intake form suggests people from past orders and fills in the rest.
 - **Live updates**: changes made on one device show up on the others within a couple of seconds.
 - **Works through bad connections**: an offline banner, readable error messages and a Try again button instead of silent failures.
@@ -54,8 +55,8 @@ See [SUPABASE_SETUP.md](SUPABASE_SETUP.md). In short: apply the migrations, set 
 - `src/hooks/useCustomerSuggestions.js`, `src/hooks/useToasts.js` - customer lookup on the intake form and toast messages
 - `src/services/` - Supabase calls (`orderService`, `importService`, `pinService`) and the import file schema
 - `src/utils/` - money math in cents (`pricing`) and parts/labor list helpers (`lineItems`)
-- `src/pages/` - Dashboard, ItemIntake, TrackingView, ItemDetails, Settings
-- `src/components/ItemDetails/`, `src/components/Settings/`, `src/components/Tracking/` - the pieces those pages are built from
+- `src/pages/` - Dashboard, ItemIntake, TrackingView, ItemDetails, ScbaHistory, Settings
+- `src/components/ItemDetails/`, `src/components/Settings/`, `src/components/Tracking/`, `src/components/ScbaHistory/` - the pieces those pages are built from
 - `supabase/migrations/` - database schema and functions
 - `supabase/functions/verify-pin/` - the PIN check
 - `tests/` - Vitest tests
@@ -87,6 +88,12 @@ A trigger recomputes `parts_total`, `labor_total`, `subtotal`, `tax` and `total`
 ```
 
 Lines with `isWarranty: true` are not charged.
+
+### SCBA repair history
+
+Repair history is kept for SCBAs only. Each order has an `is_scba` flag. Item types are typed freely ("G1 SCBA", "FIREHAWK", "G1 SBCA"), so the flag is guessed from the item type by `looks_like_scba()` (SCBA or the typo SBCA, FireHawk, and the G1 and M7 models), shown as a checkbox on the intake form and the edit screen, and can be corrected on any order. Gas detectors (Altair, Sensit), loose face pieces and cylinders are not guessed to be SCBAs. The same rule is in `src/utils/scba.js`, and a test checks the SQL and JavaScript agree.
+
+Units are matched by `serial_key`, the serial number with only letters and digits in capitals, so `sn-4471`, `SN 4471` and `SN4471` are one unit. A repeat repair is an SCBA that returns within 90 days of a finished repair (`REPEAT_WINDOW_DAYS` in `src/utils/serial.js`).
 
 ### Backups
 

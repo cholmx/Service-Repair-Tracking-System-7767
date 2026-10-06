@@ -1,4 +1,6 @@
 import { calculateTotals } from '../src/utils/pricing.js'
+import { looksLikeScba } from '../src/utils/scba.js'
+import { normalizeSerial } from '../src/utils/serial.js'
 
 export const CORRECT_PINS = ['1111', '2222']
 
@@ -8,7 +10,7 @@ const cors = {
   'access-control-allow-methods': '*'
 }
 
-export const makeOrder = (overrides = {}) => ({
+const buildOrder = (overrides = {}) => ({
   id: '607',
   customer_name: 'Pat Smith',
   customer_phone: '555-0100',
@@ -37,6 +39,15 @@ export const makeOrder = (overrides = {}) => ({
   ],
   ...overrides
 })
+
+// Like the database: the SCBA flag defaults to a guess from the item type, and serial_key is
+// the serial number with only letters and digits, in capitals.
+export const makeOrder = (overrides = {}) => {
+  const order = buildOrder(overrides)
+  order.is_scba = overrides.is_scba ?? looksLikeScba(order.item_type)
+  order.serial_key = normalizeSerial(order.serial_number)
+  return order
+}
 
 export const defaultOrders = () => [
   makeOrder({ id: '607', status: 'needs-quote' }),
@@ -148,6 +159,14 @@ export const installBackend = async (page, { orders, archived, backups, backupsM
     if (!isWrite && state.failReads) return respond({ message: 'The server is having a bad day' }, 500)
 
     if (path === 'service_orders' && request.method() === 'GET') {
+      if (search.includes('is_scba=eq.true')) {
+        let hits = [...state.orders, ...state.archived].filter((o) => o.is_scba)
+        const exact = search.match(/serial_key=eq\.([\w]+)/)?.[1]
+        const partial = search.match(/serial_key=ilike\.%(\w+)%/)?.[1]
+        if (exact) hits = hits.filter((o) => o.serial_key === exact)
+        if (partial) hits = hits.filter((o) => o.serial_key?.includes(partial.toUpperCase()))
+        return respond(hits.sort((a, b) => new Date(b.created_at) - new Date(a.created_at)))
+      }
       if (search.includes('archived_at=not.is.null')) return respond(state.archived)
       if (search.includes('archived_at=is.null')) return respond(state.orders)
       if (search.includes('select=id')) {
@@ -206,6 +225,8 @@ export const installBackend = async (page, { orders, archived, backups, backupsM
           item_type: item.item_type,
           quantity: item.quantity,
           description: item.description,
+          serial_number: item.serial_number,
+          is_scba: item.is_scba ?? looksLikeScba(item.item_type),
           status
         })
         state.orders.unshift(order)
@@ -219,6 +240,7 @@ export const installBackend = async (page, { orders, archived, backups, backupsM
       if (!order) return respond({ message: `Service order ${body.p_id} not found` }, 400)
       const updates = body.p_updates
       Object.assign(order, updates)
+      order.serial_key = normalizeSerial(order.serial_number)
       if (updates.status === 'archived' && !('archived_at' in updates)) order.archived_at = new Date().toISOString()
       recompute(order)
       if ('status' in updates) {

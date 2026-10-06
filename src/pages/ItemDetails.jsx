@@ -13,6 +13,7 @@ import StatusDetailsCard from '../components/ItemDetails/StatusDetailsCard';
 import LineItemsSection from '../components/ItemDetails/LineItemsSection';
 import { LaborTotals, PartsTotal, TaxRateInput } from '../components/ItemDetails/OrderTotals';
 import StatusHistory from '../components/ItemDetails/StatusHistory';
+import SerialHistoryCard from '../components/ScbaHistory/SerialHistoryCard';
 import { laborConfig, partsConfig } from '../components/ItemDetails/lineItemConfigs';
 
 const ItemDetails = ({ onPrintReceipt }) => {
@@ -98,6 +99,8 @@ const ItemDetails = ({ onPrintReceipt }) => {
             onEdit={startCustomerEdit}
           />
         </div>
+
+        <SerialHistoryCard item={item} />
 
         <StatusDetailsCard
           item={item}

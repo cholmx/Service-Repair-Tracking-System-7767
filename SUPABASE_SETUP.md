@@ -38,6 +38,8 @@ The app writes through these functions (created by `20261006120000_order_functio
 - `import_service_orders(p_orders)`: upserts a backup file, orders and history together, all or nothing.
 - `generate_order_id()`: picks a random unused ID. 3 digits (101-999) first, then 4 digits, then 5.
 
+`20261006140000_enable_realtime.sql` adds `service_orders` and `status_history` to the `supabase_realtime` publication so open screens update when another device makes a change. It is optional; without it the app refreshes every minute instead.
+
 A trigger on `service_orders` recomputes the money columns from `parts`, `labor` and `tax_rate` on every insert and update, so they always agree with the line items.
 
 All migrations are safe to re-run. Apply them in order. The two function migrations must be applied before deploying a version of the app that calls them.

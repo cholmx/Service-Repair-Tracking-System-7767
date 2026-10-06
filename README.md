@@ -12,6 +12,9 @@ A service order management system for repair shops, built with React and Supabas
 - **Print receipts** for customers.
 - **Archive**: move finished orders out of the way. Archived orders load only when you open them.
 - **Backup and restore**: export everything to JSON, and import it back after a preview and PIN confirmation.
+- **Returning customers**: typing a name or phone on the intake form suggests people from past orders and fills in the rest.
+- **Live updates**: changes made on one device show up on the others within a couple of seconds.
+- **Works through bad connections**: an offline banner, readable error messages and a Try again button instead of silent failures.
 - **PIN access**: two secret PINs checked by a Supabase Edge Function.
 
 ## Development
@@ -21,6 +24,7 @@ npm install
 npm run dev      # start the app
 npm run lint     # eslint
 npm test         # unit tests and database tests
+npm run test:e2e # browser tests (see below)
 npm run build    # production build
 ```
 
@@ -31,7 +35,10 @@ VITE_SUPABASE_URL=...
 VITE_SUPABASE_ANON_KEY=...
 ```
 
-The tests include a real in-memory Postgres (PGlite) that applies every file in `supabase/migrations`, so the SQL functions are tested without a Supabase project.
+### Tests
+
+- `npm test` runs the Vitest tests in `tests/`. They include a real in-memory Postgres (PGlite) that applies every file in `supabase/migrations`, so the SQL functions are tested without a Supabase project.
+- `npm run test:e2e` runs Playwright browser tests in `e2e/`. They drive the real app against a fake Supabase (`e2e/backend.js`) that stands in for the PIN function, the tables, the order functions and the realtime socket, so they need no database or network. Run `npx playwright install chromium` once first, or set `PLAYWRIGHT_CHROMIUM_EXECUTABLE` to an existing Chromium or Chrome.
 
 ## Setup
 
@@ -43,13 +50,15 @@ See [SUPABASE_SETUP.md](SUPABASE_SETUP.md). In short: apply the migrations, set 
 - `src/contexts/ServiceOrdersContext.jsx` - loads orders once and shares them with every page
 - `src/hooks/useServiceOrders.js` - read the shared orders and actions
 - `src/hooks/useOrderEditor.js` - edit state for the order details page
+- `src/hooks/useCustomerSuggestions.js`, `src/hooks/useToasts.js` - customer lookup on the intake form and toast messages
 - `src/services/` - Supabase calls (`orderService`, `importService`, `pinService`) and the import file schema
 - `src/utils/` - money math in cents (`pricing`) and parts/labor list helpers (`lineItems`)
 - `src/pages/` - Dashboard, ItemIntake, TrackingView, ItemDetails, Settings
-- `src/components/ItemDetails/`, `src/components/Settings/` - the pieces those two pages are built from
+- `src/components/ItemDetails/`, `src/components/Settings/`, `src/components/Tracking/` - the pieces those pages are built from
 - `supabase/migrations/` - database schema and functions
 - `supabase/functions/verify-pin/` - the PIN check
 - `tests/` - Vitest tests
+- `e2e/` - Playwright browser tests
 
 ## Database
 
@@ -76,6 +85,14 @@ A trigger recomputes `parts_total`, `labor_total`, `subtotal`, `tax` and `total`
 ```
 
 Lines with `isWarranty: true` are not charged.
+
+### Live updates
+
+`20261006140000_enable_realtime.sql` adds the two tables to Supabase's `supabase_realtime` publication. The app listens for changes and refetches a second after one arrives. If live updates are not available, the app refreshes every minute and whenever you return to the tab, so the migration is optional.
+
+## Printing
+
+Receipts print with the browser's own print command. `@media print` rules in `src/index.css` hide the app and print only the receipt on a single Letter page. The receipt renders straight into `<body>` (see `PrintReceipt.jsx`) so nothing else takes up space on the page.
 
 ## Status workflow
 

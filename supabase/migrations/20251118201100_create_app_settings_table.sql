@@ -33,12 +33,14 @@ CREATE TABLE IF NOT EXISTS app_settings (
 ALTER TABLE app_settings ENABLE ROW LEVEL SECURITY;
 
 -- Allow anyone to read settings (needed for PIN verification before authentication)
+DROP POLICY IF EXISTS "Anyone can read active settings" ON app_settings;
 CREATE POLICY "Anyone can read active settings"
   ON app_settings
   FOR SELECT
   USING (is_active = true);
 
 -- Allow anyone to update settings (we'll control this at app level)
+DROP POLICY IF EXISTS "Anyone can update settings" ON app_settings;
 CREATE POLICY "Anyone can update settings"
   ON app_settings
   FOR UPDATE

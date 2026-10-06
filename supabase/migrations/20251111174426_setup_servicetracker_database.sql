@@ -36,12 +36,10 @@
   - Optimized for filtering active vs archived orders
 */
 
--- Drop existing tables if they exist (for clean migration)
-DROP TABLE IF EXISTS status_history CASCADE;
-DROP TABLE IF EXISTS service_orders CASCADE;
+-- This migration is safe to re-run: it never drops tables or data.
 
 -- Create service_orders table
-CREATE TABLE service_orders (
+CREATE TABLE IF NOT EXISTS service_orders (
   id TEXT PRIMARY KEY,
   customer_name TEXT NOT NULL,
   customer_phone TEXT NOT NULL,
@@ -68,14 +66,15 @@ CREATE TABLE service_orders (
 );
 
 -- Create indexes for performance
-CREATE INDEX idx_service_orders_status ON service_orders(status);
-CREATE INDEX idx_service_orders_archived ON service_orders(archived_at);
-CREATE INDEX idx_service_orders_created ON service_orders(created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_service_orders_status ON service_orders(status);
+CREATE INDEX IF NOT EXISTS idx_service_orders_archived ON service_orders(archived_at);
+CREATE INDEX IF NOT EXISTS idx_service_orders_created ON service_orders(created_at DESC);
 
 -- Enable RLS on service_orders
 ALTER TABLE service_orders ENABLE ROW LEVEL SECURITY;
 
 -- Create permissive policy for public access (no auth implemented yet)
+DROP POLICY IF EXISTS "Allow all access to service orders" ON service_orders;
 CREATE POLICY "Allow all access to service orders"
   ON service_orders
   FOR ALL
@@ -84,7 +83,7 @@ CREATE POLICY "Allow all access to service orders"
   WITH CHECK (true);
 
 -- Create status_history table
-CREATE TABLE status_history (
+CREATE TABLE IF NOT EXISTS status_history (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   service_order_id TEXT NOT NULL REFERENCES service_orders(id) ON DELETE CASCADE,
   status TEXT NOT NULL,
@@ -93,13 +92,14 @@ CREATE TABLE status_history (
 );
 
 -- Create indexes for status_history
-CREATE INDEX idx_status_history_service_order_id ON status_history(service_order_id);
-CREATE INDEX idx_status_history_created ON status_history(created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_status_history_service_order_id ON status_history(service_order_id);
+CREATE INDEX IF NOT EXISTS idx_status_history_created ON status_history(created_at DESC);
 
 -- Enable RLS on status_history
 ALTER TABLE status_history ENABLE ROW LEVEL SECURITY;
 
 -- Create permissive policy for public access
+DROP POLICY IF EXISTS "Allow all access to status history" ON status_history;
 CREATE POLICY "Allow all access to status history"
   ON status_history
   FOR ALL

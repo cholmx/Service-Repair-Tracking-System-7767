@@ -1,115 +1,96 @@
 # ServiceTracker
 
-A modern service order management system built with React and Supabase on Bolt.new.
+A service order management system for repair shops, built with React and Supabase and hosted on Bolt.
 
-## Key Features
+## Features
 
-- **Simple Order IDs**: Easy-to-remember 3-digit order numbers (101-999)
-- **Service Order Management**: Create, track, and manage repair/service orders
-- **Status Tracking**: Real-time status updates with complete history
-- **Quote Management**: Create and approve quotes before starting work
-- **Parts & Labor**: Track parts and labor with automatic cost calculations
-- **Warranty Support**: Mark parts and labor as warranty items (no charge)
-- **Print Receipts**: Professional receipt printing for customers
-- **Archive System**: Archive completed orders to keep workspace clean
-- **Responsive Design**: Works seamlessly on desktop and mobile
-- **Supabase Integration**: Fast, reliable database with Bolt.new
-
-## Setup
-
-1. The Supabase database is pre-configured in Bolt.new
-2. Database tables are automatically created via migration
-3. Just run the app and start using it!
+- **Short order numbers**: 3 digit IDs (101-999) that roll to 4 digits when the shorter range fills up. IDs are assigned by the database, so two devices can never collide.
+- **Service orders**: create, track and edit repair orders, several items per intake.
+- **Status tracking**: every status change is recorded with notes and a timestamp.
+- **Quotes**: prepare a quote, send it for approval, then start work.
+- **Parts and labor**: line items with warranty support (warranty lines are free) and a tax rate. Totals are calculated by the database.
+- **Print receipts** for customers.
+- **Archive**: move finished orders out of the way. Archived orders load only when you open them.
+- **Backup and restore**: export everything to JSON, and import it back after a preview and PIN confirmation.
+- **PIN access**: two secret PINs checked by a Supabase Edge Function.
 
 ## Development
 
 ```bash
 npm install
-npm run dev
+npm run dev      # start the app
+npm run lint     # eslint
+npm test         # unit tests and database tests
+npm run build    # production build
 ```
 
-## File Structure
+Create a `.env` with your Supabase project:
 
-- `src/lib/supabase.js` - Supabase client configuration for Bolt.new
-- `src/hooks/useServiceOrders.js` - React hook for service order management
-- `src/pages/` - Main application pages (Dashboard, ItemIntake, ItemDetails, etc.)
-- `src/components/` - Reusable UI components
-- `supabase/migrations/` - Database schema migrations
+```
+VITE_SUPABASE_URL=...
+VITE_SUPABASE_ANON_KEY=...
+```
 
-## Database Schema
+The tests include a real in-memory Postgres (PGlite) that applies every file in `supabase/migrations`, so the SQL functions are tested without a Supabase project.
 
-The Supabase database uses the following tables:
+## Setup
+
+See [SUPABASE_SETUP.md](SUPABASE_SETUP.md). In short: apply the migrations, set the two PIN secrets and deploy the `verify-pin` Edge Function.
+
+## Project structure
+
+- `src/App.jsx` - routes, PIN gate and the shared orders provider
+- `src/contexts/ServiceOrdersContext.jsx` - loads orders once and shares them with every page
+- `src/hooks/useServiceOrders.js` - read the shared orders and actions
+- `src/hooks/useOrderEditor.js` - edit state for the order details page
+- `src/services/` - Supabase calls (`orderService`, `importService`, `pinService`) and the import file schema
+- `src/utils/` - money math in cents (`pricing`) and parts/labor list helpers (`lineItems`)
+- `src/pages/` - Dashboard, ItemIntake, TrackingView, ItemDetails, Settings
+- `src/components/ItemDetails/`, `src/components/Settings/` - the pieces those two pages are built from
+- `supabase/migrations/` - database schema and functions
+- `supabase/functions/verify-pin/` - the PIN check
+- `tests/` - Vitest tests
+
+## Database
+
+Two tables:
+
+- `service_orders`: customer and item details, `status`, `urgency`, `parts` and `labor` as JSONB arrays, the money columns, and `archived_at`.
+- `status_history`: one row per status change, linked to the order, deleted with it.
+
+Writes go through Postgres functions so they are atomic:
+
+| Function | What it does |
+| --- | --- |
+| `create_service_orders` | Creates one order per item with fresh IDs and the first history row, all or nothing |
+| `update_service_order` | Updates only the fields you send and records a history row when the status is set |
+| `import_service_orders` | Upserts orders and history from a backup, all or nothing |
+
+A trigger recomputes `parts_total`, `labor_total`, `subtotal`, `tax` and `total` from the line items on every write, using exact decimal math. The app cannot store totals that disagree with the line items.
+
+### Parts and labor JSON
 
 ```json
-{
-  "id": "TEXT PRIMARY KEY",
-  "customer_name": "TEXT NOT NULL",
-  "customer_phone": "TEXT NOT NULL", 
-  "customer_email": "TEXT",
-  "company": "TEXT",
-  "item_type": "TEXT NOT NULL",
-  "quantity": "INTEGER DEFAULT 1",
-  "description": "TEXT NOT NULL",
-  "urgency": "TEXT DEFAULT 'normal'",
-  "expected_completion": "DATE",
-  "status": "TEXT DEFAULT 'received'",
-  "serial_number": "TEXT",
-  "parts": "TEXT (JSON string)",
-  "labor": "TEXT (JSON string)", 
-  "parts_total": "DECIMAL(10,2)",
-  "labor_total": "DECIMAL(10,2)",
-  "tax_rate": "DECIMAL(5,2)",
-  "tax": "DECIMAL(10,2)",
-  "subtotal": "DECIMAL(10,2)",
-  "total": "DECIMAL(10,2)",
-  "archived_at": "TIMESTAMP",
-  "created_at": "TIMESTAMP",
-  "updated_at": "TIMESTAMP"
-}
+{ "description": "Replacement Screen", "quantity": 1, "price": 49.99, "isWarranty": false }
+{ "description": "Screen Installation", "hours": 2, "rate": 85, "isWarranty": true }
 ```
 
-## Status Workflow
+Lines with `isWarranty: true` are not charged.
 
-- With quotes: `received` → `needs-quote` → `quote-approval` → `in-progress` → `ready` → `completed` → `archived`
-- Without quotes: `received` → `in-progress` → `ready` → `completed` → `archived`
-- Can also go to `waiting-parts` during `in-progress` if waiting on parts to arrive
+## Status workflow
 
-## Parts & Labor with Warranty Support
+- With a quote: `needs-quote` → `quote-approval` → `in-progress` → `ready` → `completed` → `archived`
+- Without a quote: `received` → `in-progress` → `ready` → `completed` → `archived`
+- `waiting-parts` can be used during `in-progress`
 
-### Parts JSON Structure
-```json
-{
-  "description": "Replacement Screen",
-  "quantity": 1,
-  "price": 0,
-  "isWarranty": true
-}
-```
+## Backup and restore
 
-### Labor JSON Structure  
-```json
-{
-  "description": "Screen Installation",
-  "hours": 2,
-  "rate": 0,
-  "isWarranty": true
-}
-```
+Settings has Export and Import. Import validates the file, shows how many orders are new, how many existing ones would be overwritten and which rows are invalid, and asks for your PIN before writing anything. If the import fails, nothing is changed.
 
-When `isWarranty` is `true`, the price/rate is set to 0 and not included in totals.
+## Security notes
 
-## Data Management
+The login PINs are secrets of the `verify-pin` Edge Function. The database tables themselves still allow the public Supabase key full access (see the policies in the first migration), so the PIN protects the app screens, not direct database access. Moving to Supabase Auth and tightening those policies is the next step if the data needs stronger protection.
 
-- **Export**: Download all service orders as JSON for backup
-- **Import**: Restore service orders from exported JSON files
-- **Archive**: Move completed orders to archive to keep dashboard clean
-- **Delete**: Permanently delete archived orders
+## Technology
 
-## Technology Stack
-
-- **Frontend**: React 18 with React Router
-- **Styling**: TailwindCSS with custom design system
-- **Animations**: Framer Motion
-- **Icons**: React Icons (Feather Icons)
-- **Database**: Supabase (PostgreSQL)
-- **Hosting**: Bolt.new
+React 18, React Router, TailwindCSS, Framer Motion, Supabase (Postgres and Edge Functions), Zod, Vite, Vitest, ESLint.

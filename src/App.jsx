@@ -16,6 +16,7 @@ import PinEntryPage from './pages/PinEntryPage'
 
 // Contexts
 import { PinAuthProvider, usePinAuth } from './contexts/PinAuthContext'
+import { ServiceOrdersProvider } from './contexts/ServiceOrdersContext'
 
 // Styles
 import './App.css'
@@ -45,27 +46,29 @@ const ProtectedApp = () => {
   }
 
   return (
-    <div className="min-h-screen bg-neutral-200">
-      <Navbar />
-      <motion.main className="pt-16"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ duration: 0.3 }}
-      >
-        <Routes>
-          <Route path="/" element={<Navigate to="/dashboard" replace />} />
-          <Route path="/dashboard" element={<Dashboard onPrintReceipt={handlePrintReceipt} />} />
-          <Route path="/intake" element={<ItemIntake />} />
-          <Route path="/tracking" element={<TrackingView />} />
-          <Route path="/item/:id" element={<ItemDetails onPrintReceipt={handlePrintReceipt} />} />
-          <Route path="/settings" element={<Settings />} />
-        </Routes>
-      </motion.main>
+    <ServiceOrdersProvider>
+      <div className="min-h-screen bg-neutral-200">
+        <Navbar />
+        <motion.main className="pt-16"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.3 }}
+        >
+          <Routes>
+            <Route path="/" element={<Navigate to="/dashboard" replace />} />
+            <Route path="/dashboard" element={<Dashboard onPrintReceipt={handlePrintReceipt} />} />
+            <Route path="/intake" element={<ItemIntake />} />
+            <Route path="/tracking" element={<TrackingView />} />
+            <Route path="/item/:id" element={<ItemDetails onPrintReceipt={handlePrintReceipt} />} />
+            <Route path="/settings" element={<Settings />} />
+          </Routes>
+        </motion.main>
 
-      {printItem && (
-        <PrintReceipt item={printItem} onClose={closePrintReceipt} />
-      )}
-    </div>
+        {printItem && (
+          <PrintReceipt item={printItem} onClose={closePrintReceipt} />
+        )}
+      </div>
+    </ServiceOrdersProvider>
   )
 }
 

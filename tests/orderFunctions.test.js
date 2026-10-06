@@ -187,3 +187,64 @@ describe('totals trigger', () => {
     expect(Number(rows[0].total)).toBe(0)
   })
 })
+
+describe('import_service_orders', () => {
+  const importRows = async (rows) => {
+    const { rows: result } = await db.query('SELECT import_service_orders($1::jsonb) AS result', [JSON.stringify(rows)])
+    return result[0].result
+  }
+
+  const row = (overrides = {}) => ({
+    id: '607',
+    customer_name: 'Pat Smith',
+    customer_phone: '555-0100',
+    item_type: 'Widget',
+    quantity: 1,
+    description: 'Broken',
+    status: 'received',
+    parts: [{ description: 'Valve', quantity: 2, price: 10 }],
+    labor: [],
+    tax_rate: 10,
+    created_at: '2025-11-11T16:40:31+00:00',
+    history: [
+      { id: '5571116f-0bc8-4b28-8f47-542cd9772aa8', status: 'received', notes: 'logged', created_at: '2025-11-11T16:40:31+00:00' }
+    ],
+    ...overrides
+  })
+
+  it('creates orders and history, with totals computed by the database', async () => {
+    const result = await importRows([row()])
+    expect(result).toEqual({ created: 1, updated: 0, history_added: 1 })
+    const { rows } = await db.query(`SELECT total, created_at FROM service_orders WHERE id = '607'`)
+    expect(Number(rows[0].total)).toBe(22)
+    expect(new Date(rows[0].created_at).toISOString()).toBe('2025-11-11T16:40:31.000Z')
+  })
+
+  it('updates existing orders on re-import without duplicating history', async () => {
+    await importRows([row()])
+    const result = await importRows([row({ customer_name: 'Sam Jones' })])
+    expect(result).toEqual({ created: 0, updated: 1, history_added: 0 })
+    const { rows } = await db.query(`SELECT customer_name FROM service_orders WHERE id = '607'`)
+    expect(rows[0].customer_name).toBe('Sam Jones')
+    const history = await db.query('SELECT count(*)::int AS n FROM status_history')
+    expect(history.rows[0].n).toBe(1)
+  })
+
+  it('does not duplicate history that has no id but the same status and time', async () => {
+    const noId = row({ history: [{ status: 'received', notes: 'logged', created_at: '2025-11-11T16:40:31+00:00' }] })
+    await importRows([noId])
+    await importRows([noId])
+    const history = await db.query('SELECT count(*)::int AS n FROM status_history')
+    expect(history.rows[0].n).toBe(1)
+  })
+
+  it('writes nothing if any row fails', async () => {
+    await expect(importRows([row(), row({ id: '608', customer_name: null })])).rejects.toThrow()
+    const { rows } = await db.query('SELECT count(*)::int AS n FROM service_orders')
+    expect(rows[0].n).toBe(0)
+  })
+
+  it('rejects input that is not an array', async () => {
+    await expect(importRows({ id: '1' })).rejects.toThrow(/array/)
+  })
+})

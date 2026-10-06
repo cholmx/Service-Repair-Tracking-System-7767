@@ -7,12 +7,21 @@ import SafeIcon from '../common/SafeIcon';
 import StatusBadge from '../components/StatusBadge';
 import LoadingSkeleton from '../components/LoadingSkeleton';
 import ToastContainer from '../components/ToastContainer';
-import { supabase } from '../lib/supabase';
 
 const { FiSearch, FiFilter, FiEye, FiArchive, FiX, FiRefreshCw, FiTrash2, FiHash } = FiIcons;
 
 const TrackingView = () => {
-  const { items, archivedItems, loading, archiveItem, deleteArchivedItem, refresh } = useServiceOrders();
+  const {
+    items,
+    archivedItems,
+    loading,
+    archivedLoading,
+    loadArchived,
+    archiveItem,
+    restoreItem,
+    deleteArchivedItem,
+    restoreDeletedItem
+  } = useServiceOrders();
   const [searchParams, setSearchParams] = useSearchParams();
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
@@ -28,6 +37,13 @@ const TrackingView = () => {
       setStatusFilter(filterParam);
     }
   }, [searchParams]);
+
+  useEffect(() => {
+    if (!showArchived) return;
+    loadArchived().catch(() => {
+      setToasts(prev => [...prev, { id: Date.now(), message: 'Failed to load archived service orders', type: 'error', undoAction: null }]);
+    });
+  }, [showArchived, loadArchived]);
 
   if (loading) {
     return <LoadingSkeleton type="tracking" />;
@@ -102,17 +118,7 @@ const TrackingView = () => {
         await archiveItem(archiveConfirmId);
         setArchiveConfirmId(null);
 
-        const undoAction = async () => {
-          await supabase
-            .from('service_orders')
-            .update({
-              status: itemToArchive.status,
-              archived_at: null,
-              updated_at: new Date().toISOString()
-            })
-            .eq('id', archiveConfirmId);
-          await refresh();
-        };
+        const undoAction = () => restoreItem(archiveConfirmId, itemToArchive.status);
 
         addToast(`Service Order #${archiveConfirmId} archived`, 'success', undoAction);
       } catch (error) {
@@ -138,48 +144,7 @@ const TrackingView = () => {
         await deleteArchivedItem(deleteConfirmId);
         setDeleteConfirmId(null);
 
-        const undoAction = async () => {
-          const restoreData = {
-            id: itemToDelete.id,
-            customer_name: itemToDelete.customer_name,
-            customer_phone: itemToDelete.customer_phone,
-            customer_email: itemToDelete.customer_email,
-            company: itemToDelete.company,
-            item_type: itemToDelete.item_type,
-            serial_number: itemToDelete.serial_number,
-            quantity: itemToDelete.quantity,
-            description: itemToDelete.description,
-            urgency: itemToDelete.urgency,
-            expected_completion: itemToDelete.expected_completion,
-            status: itemToDelete.status,
-            parts: itemToDelete.parts || [],
-            labor: itemToDelete.labor || [],
-            parts_total: itemToDelete.parts_total || 0,
-            labor_total: itemToDelete.labor_total || 0,
-            tax_rate: itemToDelete.tax_rate || 0,
-            tax: itemToDelete.tax || 0,
-            subtotal: itemToDelete.subtotal || 0,
-            total: itemToDelete.total || 0,
-            archived_at: itemToDelete.archived_at,
-            created_at: itemToDelete.created_at,
-            updated_at: new Date().toISOString()
-          };
-
-          await supabase.from('service_orders').insert([restoreData]);
-
-          if (itemToDelete.statusHistory && Array.isArray(itemToDelete.statusHistory)) {
-            for (const history of itemToDelete.statusHistory) {
-              await supabase.from('status_history').insert([{
-                service_order_id: itemToDelete.id,
-                status: history.status,
-                notes: history.notes || '',
-                created_at: history.created_at
-              }]);
-            }
-          }
-
-          await refresh();
-        };
+        const undoAction = () => restoreDeletedItem(itemToDelete);
 
         addToast(`Service Order #${deleteConfirmId} deleted`, 'success', undoAction);
       } catch (error) {
@@ -234,7 +199,7 @@ const TrackingView = () => {
               </h1>
               <p className="text-neutral-600">
                 {showArchived
-                  ? `View ${archivedItems.length} archived Service Orders`
+                  ? (archivedLoading ? 'Loading archived Service Orders...' : `View ${archivedItems.length} archived Service Orders`)
                   : 'Search and monitor all active Service Orders'}
               </p>
             </div>
@@ -328,7 +293,9 @@ const TrackingView = () => {
           {filteredItems.length === 0 ? (
             <div className="p-12 text-center">
               <p className="text-neutral-500 text-lg">
-                {showArchived
+                {showArchived && archivedLoading
+                  ? 'Loading archived Service Orders...'
+                  : showArchived
                   ? 'No archived Service Orders found matching your criteria'
                   : 'No Service Orders found matching your criteria'}
               </p>

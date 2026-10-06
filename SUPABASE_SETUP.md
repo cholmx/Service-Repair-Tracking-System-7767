@@ -1,6 +1,6 @@
-# Supabase Setup for Bolt.new
+# Supabase Setup
 
-This ServiceTracker application uses Bolt.new's built-in Supabase database. The database is pre-configured and ready to use!
+ServiceTracker stores its data in Supabase and is hosted on Bolt. Apply the migrations in `supabase/migrations`, then set up the PINs below.
 
 ## Database Tables
 
@@ -29,13 +29,22 @@ Tracks all status changes for complete audit trail.
 - `notes` (TEXT) - Optional notes about the change
 - `created_at` (TIMESTAMPTZ) - When the change occurred
 
-## Order ID System
+## Database functions
 
-Unlike traditional databases that use UUIDs, ServiceTracker uses simple 3-digit numbers for easy customer reference.
+The app writes through these functions (created by `20261006120000_order_functions.sql` and `20261006121000_import_function.sql`):
+
+- `create_service_orders(p_order)`: creates the orders for an intake and their first status history rows in one transaction.
+- `update_service_order(p_id, p_updates, p_notes)`: applies the fields you send and records a status history row when a status is included.
+- `import_service_orders(p_orders)`: upserts a backup file, orders and history together, all or nothing.
+- `generate_order_id()`: picks a random unused ID. 3 digits (101-999) first, then 4 digits, then 5.
+
+A trigger on `service_orders` recomputes the money columns from `parts`, `labor` and `tax_rate` on every insert and update, so they always agree with the line items.
+
+All migrations are safe to re-run. Apply them in order. The two function migrations must be applied before deploying a version of the app that calls them.
 
 ## Data Backup & Restore
 
-The Settings page includes built-in export/import functionality for data backup and migration.
+The Settings page exports everything to JSON. Import shows a preview (new, overwritten and invalid rows) and asks for your PIN before it writes anything.
 
 ## Access PINs
 

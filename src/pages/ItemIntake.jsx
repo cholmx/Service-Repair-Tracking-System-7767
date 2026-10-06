@@ -102,19 +102,7 @@ const ItemIntake = () => {
     if (validateForm()) {
       setIsSubmitting(true);
       try {
-        // Check if any items need quotes and set initial status accordingly
-        const processedItems = formData.items.map(item => {
-          // If item needs a quote, we'll let the backend know
-          return {
-            ...item,
-            initialStatus: item.needsQuote ? 'needs-quote' : 'received'
-          };
-        });
-
-        await addItem({
-          ...formData,
-          items: processedItems
-        });
+        await addItem(formData);
         
         navigate('/dashboard');
       } catch (error) {

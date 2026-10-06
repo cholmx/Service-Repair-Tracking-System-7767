@@ -5,6 +5,7 @@ import { useServiceOrders } from '../hooks/useServiceOrders';
 import { FiCalendar, FiDollarSign, FiFileText, FiHash, FiHome, FiMail, FiMinus, FiPackage, FiPhone, FiPlus, FiSave, FiUser } from 'react-icons/fi';
 import SafeIcon from '../common/SafeIcon';
 import LoadingSkeleton from '../components/LoadingSkeleton';
+import CustomerInput from '../components/CustomerInput';
 
 
 const ItemIntake = () => {
@@ -30,6 +31,18 @@ const ItemIntake = () => {
     if (errors[name]) {
       setErrors(prev => ({ ...prev, [name]: '' }));
     }
+  };
+
+  // Picking a past customer fills in their details; the shop can still change any of them.
+  const fillFromCustomer = (customer) => {
+    setFormData(prev => ({
+      ...prev,
+      customerName: customer.name,
+      customerPhone: customer.phone,
+      customerEmail: customer.email,
+      company: customer.company
+    }));
+    setErrors(prev => ({ ...prev, customerName: '', customerPhone: '' }));
   };
 
   const handleItemChange = (index, field, value) => {
@@ -148,11 +161,12 @@ const ItemIntake = () => {
                   <SafeIcon icon={FiUser} className="mr-2 text-primary-500" />
                   Customer Name *
                 </label>
-                <input
+                <CustomerInput
                   type="text"
                   name="customerName"
                   value={formData.customerName}
                   onChange={handleChange}
+                  onSelectCustomer={fillFromCustomer}
                   className={`${inputClasses} ${errors.customerName ? errorClasses : ''}`}
                   placeholder="Enter customer name"
                 />
@@ -181,11 +195,13 @@ const ItemIntake = () => {
                   <SafeIcon icon={FiPhone} className="mr-2 text-primary-500" />
                   Phone Number *
                 </label>
-                <input
+                <CustomerInput
                   type="tel"
                   name="customerPhone"
                   value={formData.customerPhone}
                   onChange={handleChange}
+                  onSelectCustomer={fillFromCustomer}
+                  minChars={3}
                   className={`${inputClasses} ${errors.customerPhone ? errorClasses : ''}`}
                   placeholder="Enter phone number"
                 />

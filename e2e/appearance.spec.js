@@ -39,5 +39,20 @@ test('input placeholders are dark enough to read', async ({ page }) => {
   await login(page)
   await page.goto('/#/intake')
   const color = await page.getByPlaceholder('Enter customer name').evaluate((el) => getComputedStyle(el, '::placeholder').color)
-  expect(color).toBe('rgb(115, 115, 115)')
+  expect(color).toBe('rgb(102, 102, 102)')
+})
+
+test('form labels and typed text are dark and bold enough to read', async ({ page }) => {
+  await installBackend(page)
+  await login(page)
+  await page.goto('/#/intake')
+
+  const label = page.getByText('Customer Name *')
+  expect(await label.evaluate((el) => getComputedStyle(el).fontWeight)).toBe('600')
+  expect(await label.evaluate((el) => getComputedStyle(el).color)).toBe('rgb(23, 23, 23)')
+
+  const input = page.getByPlaceholder('Enter customer name')
+  await input.fill('Cherry City')
+  expect(await input.evaluate((el) => getComputedStyle(el).fontWeight)).toBe('500')
+  expect(await input.evaluate((el) => getComputedStyle(el).color)).toBe('rgb(23, 23, 23)')
 })

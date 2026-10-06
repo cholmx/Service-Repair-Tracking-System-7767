@@ -11,7 +11,7 @@ const Field = ({ icon, label, children }) => (
   <div className="flex items-center">
     <SafeIcon icon={icon} className="text-primary-500 mr-3" />
     <div>
-      <span className="text-sm text-neutral-500">{label}</span>
+      <span className="text-sm font-semibold text-neutral-700">{label}</span>
       {children}
     </div>
   </div>

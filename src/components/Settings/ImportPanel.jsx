@@ -47,7 +47,7 @@ const ImportPreview = ({ preview, pin, setPin, pinError, busy, onConfirm, onCanc
       )}
 
       <div>
-        <label className="block mb-1 text-sm font-medium text-neutral-700">Enter your PIN to confirm</label>
+        <label className="block mb-1 text-sm font-semibold text-neutral-900">Enter your PIN to confirm</label>
         <input
           type="password"
           inputMode="numeric"
@@ -179,7 +179,7 @@ const ImportPanel = ({ onMessage, onImported, restoreRequest }) => {
         />
       ) : (
         <div>
-          <label className="block mb-2 text-sm font-medium text-neutral-700">Select export file (.json)</label>
+          <label className="block mb-2 text-sm font-semibold text-neutral-900">Select export file (.json)</label>
           <input
             key={fileInputKey}
             type="file"

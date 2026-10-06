@@ -34,7 +34,7 @@ export const TaxRateInput = ({ value, onChange, parts, labor }) => {
 
   return (
     <div className="mt-6 p-4 bg-neutral-50 rounded-lg">
-      <label className="block text-sm text-neutral-500 mb-1">Tax Rate (%)</label>
+      <label className="block text-sm font-semibold text-neutral-800 mb-1">Tax Rate (%)</label>
       <input
         type="number"
         value={value}

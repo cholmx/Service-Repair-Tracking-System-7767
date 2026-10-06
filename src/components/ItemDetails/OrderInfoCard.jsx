@@ -36,7 +36,7 @@ const OrderInfoCard = ({
       <div className="flex items-center">
         <SafeIcon icon={FiPackage} className="text-primary-500 mr-3" />
         <div>
-          <span className="text-sm text-neutral-500">Service Order:</span>
+          <span className="text-sm font-semibold text-neutral-700">Service Order:</span>
           {isEditingCustomer ? (
             <>
             <div className="flex items-center mt-1 space-x-2">
@@ -56,7 +56,7 @@ const OrderInfoCard = ({
                 placeholder="Item type"
               />
             </div>
-            <label className="flex items-center mt-2 text-sm text-neutral-700">
+            <label className="flex items-center mt-2 text-sm font-medium text-neutral-900">
               <input
                 type="checkbox"
                 checked={Boolean(customerEditData.is_scba)}
@@ -79,7 +79,7 @@ const OrderInfoCard = ({
       <div className="flex items-center">
         <SafeIcon icon={FiHash} className="text-primary-500 mr-3" />
         <div>
-          <span className="text-sm text-neutral-500">Serial Number:</span>
+          <span className="text-sm font-semibold text-neutral-700">Serial Number:</span>
           {isEditing ? (
             <input
               type="text"
@@ -113,7 +113,7 @@ const OrderInfoCard = ({
       </div>
 
       <div className="mt-6">
-        <span className="text-sm text-neutral-500">Description:</span>
+        <span className="text-sm font-semibold text-neutral-700">Description:</span>
         {isEditingCustomer ? (
           <textarea
             value={customerEditData.description}

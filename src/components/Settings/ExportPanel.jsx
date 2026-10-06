@@ -65,7 +65,7 @@ const ExportPanel = ({ activeCount, onMessage }) => {
             onChange={() => setIncludeArchived(!includeArchived)}
             className="mr-2 h-4 w-4 text-primary-500 rounded border-neutral-300 focus:ring-primary-500"
           />
-          <span className="text-neutral-700">Include archived service orders</span>
+          <span className="font-medium text-neutral-900">Include archived service orders</span>
         </label>
       </div>
 

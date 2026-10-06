@@ -8,7 +8,7 @@ const StatusDetailsCard = ({ item, isEditing, editData, needsQuote, onEditField 
     <h2 className="text-xl font-semibold text-neutral-900 mb-6">Status & Details</h2>
     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
       <div>
-        <span className="text-sm text-neutral-500">Current Status:</span>
+        <span className="text-sm font-semibold text-neutral-700">Current Status:</span>
         {isEditing ? (
           <select
             value={editData.status}
@@ -28,7 +28,7 @@ const StatusDetailsCard = ({ item, isEditing, editData, needsQuote, onEditField 
         )}
       </div>
       <div>
-        <span className="text-sm text-neutral-500">Expected Completion:</span>
+        <span className="text-sm font-semibold text-neutral-700">Expected Completion:</span>
         {isEditing ? (
           <input
             type="date"
@@ -45,7 +45,7 @@ const StatusDetailsCard = ({ item, isEditing, editData, needsQuote, onEditField 
     </div>
     {isEditing && (
       <div className="mt-6">
-        <label className="block text-sm text-neutral-500 mb-2">Status Update Notes:</label>
+        <label className="block text-sm font-semibold text-neutral-800 mb-2">Status Update Notes:</label>
         <textarea
           value={editData.statusNotes}
           onChange={(e) => onEditField('statusNotes', e.target.value)}

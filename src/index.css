@@ -16,9 +16,17 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
+/* What is typed into a form is dark and medium weight; the hint text before typing is a step lighter. */
+input:not([type='checkbox']):not([type='radio']):not([type='file']),
+textarea,
+select {
+  color: #171717;
+  font-weight: 500;
+}
+
 input::placeholder,
 textarea::placeholder {
-  color: #737373;
+  color: #666666;
   opacity: 1;
 }
 

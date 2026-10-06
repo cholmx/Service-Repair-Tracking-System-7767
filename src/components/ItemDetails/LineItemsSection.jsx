@@ -16,7 +16,7 @@ const LineEditor = ({ config, line, onChange, onToggleWarranty, onRemove }) => (
   <div className="grid grid-cols-1 gap-4 p-4 bg-neutral-50 rounded-lg">
     <div className="grid grid-cols-1 md:grid-cols-6 gap-4">
       <div className="md:col-span-2">
-        <label className="block text-sm text-neutral-500 mb-1">{config.descriptionLabel}</label>
+        <label className="block text-sm font-semibold text-neutral-800 mb-1">{config.descriptionLabel}</label>
         <input
           type="text"
           value={line.description}
@@ -26,7 +26,7 @@ const LineEditor = ({ config, line, onChange, onToggleWarranty, onRemove }) => (
         />
       </div>
       <div>
-        <label className="block text-sm text-neutral-500 mb-1">{config.quantityLabel}</label>
+        <label className="block text-sm font-semibold text-neutral-800 mb-1">{config.quantityLabel}</label>
         <input
           type="number"
           value={line[config.quantityField]}
@@ -36,7 +36,7 @@ const LineEditor = ({ config, line, onChange, onToggleWarranty, onRemove }) => (
         />
       </div>
       <div>
-        <label className="block text-sm text-neutral-500 mb-1">{config.rateLabel}</label>
+        <label className="block text-sm font-semibold text-neutral-800 mb-1">{config.rateLabel}</label>
         <input
           type="number"
           value={line[config.rateField]}
@@ -47,7 +47,7 @@ const LineEditor = ({ config, line, onChange, onToggleWarranty, onRemove }) => (
         />
       </div>
       <div className="flex flex-col">
-        <label className="block text-sm text-neutral-500 mb-1">Warranty</label>
+        <label className="block text-sm font-semibold text-neutral-800 mb-1">Warranty</label>
         <button
           type="button"
           onClick={onToggleWarranty}

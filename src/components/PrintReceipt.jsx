@@ -1,100 +1,17 @@
 import React from 'react';
-import { FiHash, FiShield, FiTool } from 'react-icons/fi';
+import { createPortal } from 'react-dom';
+import { FiTool } from 'react-icons/fi';
 import SafeIcon from '../common/SafeIcon';
 
 
 const PrintReceipt = ({ item, onClose }) => {
+  // The receipt is styled for paper in index.css (@media print), so the browser prints this
+  // view directly. The page title becomes the suggested file name when saving as PDF.
   const handlePrint = () => {
-    // Create a new window for printing
-    const printWindow = window.open('', '_blank');
-    const printContent = document.querySelector('.print-receipt').innerHTML;
-
-    printWindow.document.write(`
-      <!DOCTYPE html>
-      <html>
-        <head>
-          <title>Service Receipt - #${item.id}</title>
-          <style>
-            * { margin: 0; padding: 0; box-sizing: border-box; }
-            body { font-family: Arial, sans-serif; font-size: 10pt; line-height: 1.2; color: #000; background: white; }
-            .print-receipt { padding: 20px; max-width: 600px; margin: 0 auto; }
-            h1 { font-size: 14pt; margin-bottom: 4px; text-align: center; }
-            h2 { font-size: 11pt; margin-bottom: 8px; border-bottom: 1px solid #000; padding-bottom: 2px; }
-            h3 { font-size: 10pt; margin-bottom: 4px; }
-            .text-center { text-align: center; }
-            .text-right { text-align: right; }
-            .font-bold { font-weight: bold; }
-            .font-medium { font-weight: 500; }
-            .text-sm { font-size: 9pt; }
-            .text-xs { font-size: 8pt; }
-            .text-lg { font-size: 12pt; }
-            .mb-1 { margin-bottom: 2px; }
-            .mb-2 { margin-bottom: 4px; }
-            .mb-3 { margin-bottom: 6px; }
-            .mb-4 { margin-bottom: 8px; }
-            .mt-1 { margin-top: 2px; }
-            .mt-2 { margin-top: 4px; }
-            .mt-3 { margin-top: 6px; }
-            .pt-1 { padding-top: 2px; }
-            .pt-2 { padding-top: 4px; }
-            .pb-1 { padding-bottom: 2px; }
-            .border-t { border-top: 1px solid #000; }
-            .border-t-2 { border-top: 2px solid #000; }
-            .border-b { border-bottom: 1px solid #000; }
-            .grid { display: grid; gap: 12px; }
-            .grid-cols-2 { grid-template-columns: 1fr 1fr; }
-            .flex { display: flex; }
-            .justify-between { justify-content: space-between; }
-            .justify-center { justify-content: center; }
-            .items-center { align-items: center; }
-            .space-y-1 > * + * { margin-top: 2px; }
-            .space-x-2 > * + * { margin-left: 4px; }
-            .text-neutral-500 { color: #666; }
-            .text-neutral-600 { color: #555; }
-            .text-neutral-700 { color: #444; }
-            .text-neutral-900 { color: #000; }
-            .text-green-700 { color: #15803d; }
-            .text-blue-700 { color: #1d4ed8; }
-            .text-purple-700 { color: #7e22ce; }
-            .leading-tight { line-height: 1.1; }
-            .truncate { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-            .pr-2 { padding-right: 4px; }
-            .flex-1 { flex: 1; }
-            .bg-blue-50 { background-color: #eff6ff; }
-            .bg-green-50 { background-color: #f0fdf4; }
-            .bg-purple-50 { background-color: #f5f3ff; }
-            .p-2 { padding: 8px; }
-            .px-2 { padding-left: 8px; padding-right: 8px; }
-            .py-1 { padding-top: 4px; padding-bottom: 4px; }
-            .rounded { border-radius: 4px; }
-            .warranty-badge { background-color: #dcfce7; color: #166534; padding: 2px 6px; border-radius: 12px; font-size: 8pt; font-weight: 500; margin-left: 6px; }
-            .quote-badge { background-color: #f3e8ff; color: #7e22ce; padding: 2px 6px; border-radius: 12px; font-size: 8pt; font-weight: 500; margin-left: 6px; }
-            @media print {
-              body { print-color-adjust: exact; }
-              .print-receipt { padding: 10px; }
-              .bg-blue-50 { background-color: #f8f9fa !important; }
-              .bg-green-50 { background-color: #f0fdf4 !important; }
-              .bg-purple-50 { background-color: #f5f3ff !important; }
-              .warranty-badge { background-color: #dcfce7 !important; color: #166534 !important; }
-              .quote-badge { background-color: #f3e8ff !important; color: #7e22ce !important; }
-            }
-          </style>
-        </head>
-        <body>
-          <div class="print-receipt">${printContent}</div>
-          <script>
-            window.onload = function() {
-              window.print();
-              window.onafterprint = function() {
-                window.close();
-              };
-            };
-          </script>
-        </body>
-      </html>
-    `);
-
-    printWindow.document.close();
+    const originalTitle = document.title;
+    document.title = `Service Receipt - #${item.id}`;
+    window.addEventListener('afterprint', () => { document.title = originalTitle; }, { once: true });
+    window.print();
   };
 
   const currentDate = new Date().toLocaleDateString();
@@ -118,9 +35,10 @@ const PrintReceipt = ({ item, onClose }) => {
   // Special styling for quote approval receipts
   const isQuoteApproval = item.status === 'quote-approval';
 
-  return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+  // Rendered straight into <body> so printing can hide the whole app and print only the receipt.
+  return createPortal(
+    <div className="print-container fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+      <div className="print-modal bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
         {/* Screen-only header */}
         <div className="p-6 border-b border-neutral-200 print:hidden">
           <div className="flex items-center justify-between">
@@ -163,7 +81,7 @@ const PrintReceipt = ({ item, onClose }) => {
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 print:gap-3 mb-4 print:mb-3">
+          <div className="grid grid-cols-1 md:grid-cols-2 print:grid-cols-2 gap-4 print:gap-3 mb-4 print:mb-3">
             {/* Customer Information */}
             <div>
               <h2 className="text-sm font-semibold text-neutral-900 mb-2 border-b border-neutral-200 pb-1">
@@ -255,7 +173,7 @@ const PrintReceipt = ({ item, onClose }) => {
             </h2>
 
             {/* Parts and Labor in two columns */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 print:gap-3">
+            <div className="grid grid-cols-1 md:grid-cols-2 print:grid-cols-2 gap-4 print:gap-3">
               {/* Parts Section */}
               <div>
                 <h3 className="text-xs font-medium text-neutral-900 mb-2">Parts Used:</h3>
@@ -381,7 +299,8 @@ const PrintReceipt = ({ item, onClose }) => {
           </div>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };
 

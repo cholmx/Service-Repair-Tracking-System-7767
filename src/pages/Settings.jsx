@@ -399,7 +399,7 @@ const Settings = () => {
             <div className="border border-neutral-200 rounded-lg p-6">
               <h3 className="text-lg font-medium mb-4">Session Information</h3>
               <p className="text-neutral-600 mb-6">
-                Your current session details. PINs are stored as hashes in the database and are changed from the Supabase SQL editor.
+                Your current session details. PINs are secrets stored on the server and are changed in the Supabase dashboard.
               </p>
 
               <div className="space-y-4">

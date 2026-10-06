@@ -39,17 +39,18 @@ The Settings page includes built-in export/import functionality for data backup 
 
 ## Access PINs
 
-The app has two access PINs. They are stored as bcrypt hashes in the `app_pins` table, which the browser cannot read or write. The login screen calls the `verify_pin()` function, which only answers yes or no and locks out guessing after 10 failed attempts in 5 minutes.
+The two access PINs are secrets of the `verify-pin` Edge Function (`supabase/functions/verify-pin`). They are not in the repo, the app bundle or the database. The login screen sends the entered PIN to the function, which answers yes or no.
 
-1. Apply the migrations (the one that creates this is `20261006130000_pin_verification.sql`).
-2. Open the Supabase SQL editor and run the following, with your own values. Do not commit them.
+1. Set the secrets in Supabase (Edge Functions, then Secrets), or from the CLI:
 
-```sql
-INSERT INTO app_pins (slot, pin_hash) VALUES
-  ('primary',   extensions.crypt('YOUR_FIRST_PIN',  extensions.gen_salt('bf'))),
-  ('secondary', extensions.crypt('YOUR_SECOND_PIN', extensions.gen_salt('bf')))
-ON CONFLICT (slot) DO UPDATE
-  SET pin_hash = EXCLUDED.pin_hash, updated_at = now();
+```bash
+supabase secrets set PIN_PRIMARY=your-first-pin PIN_SECONDARY=your-second-pin
 ```
 
-Run the same statement again any time you want to change a PIN.
+2. Deploy the function (from the CLI, or ask Bolt to deploy the `verify-pin` edge function):
+
+```bash
+supabase functions deploy verify-pin
+```
+
+To change a PIN, set the secret again. Edge Functions pick up new secrets without a redeploy of the app.

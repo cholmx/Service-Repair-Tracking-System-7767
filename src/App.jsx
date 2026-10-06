@@ -5,6 +5,7 @@ import { motion } from 'framer-motion'
 // Components
 import Navbar from './components/Navbar'
 import LoadingSkeleton from './components/LoadingSkeleton'
+import ConnectionBanner from './components/ConnectionBanner'
 
 // Pages and the receipt are loaded when first needed so the first screen downloads less code.
 const PrintReceipt = lazy(() => import('./components/PrintReceipt'))
@@ -59,6 +60,7 @@ const ProtectedApp = () => {
           animate={{ opacity: 1 }}
           transition={{ duration: 0.3 }}
         >
+          <ConnectionBanner />
           <Suspense fallback={<LoadingSkeleton type="default" />}>
             <Routes>
               <Route path="/" element={<Navigate to="/dashboard" replace />} />

@@ -13,9 +13,10 @@ export const migrations = readdirSync(migrationsDir)
 
 // An in-memory Postgres with every migration applied, mirroring Supabase's
 // layout (extensions live in the "extensions" schema).
-export const createDb = async () => {
+export const createDb = async ({ before } = {}) => {
   const db = new PGlite()
   await db.exec('CREATE SCHEMA IF NOT EXISTS extensions')
+  if (before) await db.exec(before)
   for (const sql of migrations) {
     await db.exec(sql)
   }

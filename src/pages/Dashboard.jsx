@@ -9,7 +9,7 @@ import ReceivedOrders from '../components/ReceivedOrders';
 import LoadingSkeleton from '../components/LoadingSkeleton';
 
 const Dashboard = ({ onPrintReceipt }) => {
-  const { items, loading, error } = useServiceOrders();
+  const { items, loading, error, retry } = useServiceOrders();
 
   if (loading) {
     return <LoadingSkeleton type="dashboard" />;
@@ -22,7 +22,12 @@ const Dashboard = ({ onPrintReceipt }) => {
           <div className="bg-red-50 border border-red-200 rounded-lg p-6">
             <h2 className="text-lg font-semibold text-red-800 mb-2">Connection Error</h2>
             <p className="text-red-600 mb-4">{error}</p>
-            <p className="text-sm text-red-500">Please check your internet connection and try refreshing the page.</p>
+            <button
+              onClick={() => retry()}
+              className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors duration-200"
+            >
+              Try again
+            </button>
           </div>
         </div>
       </div>

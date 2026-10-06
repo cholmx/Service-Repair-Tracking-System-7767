@@ -16,11 +16,13 @@ export const useOrderEditor = (item, updateItem) => {
   const [editData, setEditData] = useState(null)
   const [customerEditData, setCustomerEditData] = useState(null)
   const [isSaving, setIsSaving] = useState(false)
+  const [saveError, setSaveError] = useState(null)
 
   const isEditing = editData !== null
   const isEditingCustomer = customerEditData !== null
 
-  const startEdit = () =>
+  const startEdit = () => {
+    setSaveError(null)
     setEditData({
       status: item.status,
       expected_completion: item.expected_completion || '',
@@ -30,8 +32,12 @@ export const useOrderEditor = (item, updateItem) => {
       labor: item.labor || [],
       tax_rate: item.tax_rate || 0
     })
+  }
 
-  const cancelEdit = () => setEditData(null)
+  const cancelEdit = () => {
+    setSaveError(null)
+    setEditData(null)
+  }
 
   const setEditField = (field, value) => setEditData((prev) => ({ ...prev, [field]: value }))
 
@@ -40,7 +46,7 @@ export const useOrderEditor = (item, updateItem) => {
     let statusNotes = editData.statusNotes || ''
     if (item.status === 'needs-quote' && editData.status === 'quote-approval') {
       if (editData.parts.length === 0 && editData.labor.length === 0) {
-        alert('Please add parts or labor to the quote before changing status to "Awaiting Quote Approval"')
+        setSaveError('Please add parts or labor to the quote before changing status to "Awaiting Quote Approval".')
         return
       }
       if (!statusNotes) {
@@ -50,6 +56,7 @@ export const useOrderEditor = (item, updateItem) => {
 
     try {
       setIsSaving(true)
+      setSaveError(null)
       // Totals are calculated by the database from parts, labor and tax rate.
       await updateItem(item.id, {
         status: editData.status,
@@ -62,14 +69,14 @@ export const useOrderEditor = (item, updateItem) => {
       })
       setEditData(null)
     } catch (error) {
-      console.error('Failed to update item:', error)
-      alert('Failed to update service order. Please try again.')
+      setSaveError(`Could not save the service order. ${error.message}`)
     } finally {
       setIsSaving(false)
     }
   }
 
-  const startEditCustomer = () =>
+  const startEditCustomer = () => {
+    setSaveError(null)
     setCustomerEditData({
       customer_name: item.customer_name,
       customer_phone: item.customer_phone,
@@ -80,14 +87,19 @@ export const useOrderEditor = (item, updateItem) => {
       description: item.description,
       serial_number: item.serial_number || ''
     })
+  }
 
-  const cancelEditCustomer = () => setCustomerEditData(null)
+  const cancelEditCustomer = () => {
+    setSaveError(null)
+    setCustomerEditData(null)
+  }
 
   const setCustomerField = (field, value) => setCustomerEditData((prev) => ({ ...prev, [field]: value }))
 
   const saveCustomer = async () => {
     try {
       setIsSaving(true)
+      setSaveError(null)
       await updateItem(item.id, {
         customer_name: customerEditData.customer_name,
         customer_phone: customerEditData.customer_phone,
@@ -100,8 +112,7 @@ export const useOrderEditor = (item, updateItem) => {
       })
       setCustomerEditData(null)
     } catch (error) {
-      console.error('Failed to update customer information:', error)
-      alert('Failed to update customer information. Please try again.')
+      setSaveError(`Could not save the customer information. ${error.message}`)
     } finally {
       setIsSaving(false)
     }
@@ -129,6 +140,8 @@ export const useOrderEditor = (item, updateItem) => {
     isEditing,
     isEditingCustomer,
     isSaving,
+    saveError,
+    clearSaveError: () => setSaveError(null),
     editData,
     customerEditData,
     startEdit,

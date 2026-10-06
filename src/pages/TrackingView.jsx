@@ -42,7 +42,7 @@ const TrackingView = () => {
 
   useEffect(() => {
     if (!showArchived) return;
-    loadArchived().catch(() => addToast('Failed to load archived service orders', 'error'));
+    loadArchived().catch((error) => addToast(`Failed to load archived service orders. ${error.message}`, 'error'));
   }, [showArchived, loadArchived, addToast]);
 
   const visibleOrders = useMemo(
@@ -75,8 +75,8 @@ const TrackingView = () => {
       await archiveItem(id);
       setArchiveConfirmId(null);
       addToast(`Service Order #${id} archived`, 'success', () => restoreItem(id, order.status));
-    } catch {
-      addToast('Failed to archive service order', 'error');
+    } catch (error) {
+      addToast(`Failed to archive service order. ${error.message}`, 'error');
     }
   };
 
@@ -87,8 +87,8 @@ const TrackingView = () => {
       await deleteArchivedItem(id);
       setDeleteConfirmId(null);
       addToast(`Service Order #${id} deleted`, 'success', () => restoreDeletedItem(order));
-    } catch {
-      addToast('Failed to delete service order', 'error');
+    } catch (error) {
+      addToast(`Failed to delete service order. ${error.message}`, 'error');
     }
   };
 

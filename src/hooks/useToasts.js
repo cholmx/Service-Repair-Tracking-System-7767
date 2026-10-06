@@ -21,8 +21,8 @@ export const useToasts = () => {
         await toast.undoAction()
         removeToast(toast.id)
         addToast('Action undone successfully', 'success')
-      } catch {
-        addToast('Failed to undo action', 'error')
+      } catch (error) {
+        addToast(`Failed to undo action. ${error.message}`, 'error')
       }
     },
     [addToast, removeToast]

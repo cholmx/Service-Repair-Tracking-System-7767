@@ -4,6 +4,7 @@ import { motion } from 'framer-motion';
 import { useServiceOrders } from '../hooks/useServiceOrders';
 import { useOrderEditor } from '../hooks/useOrderEditor';
 import LoadingSkeleton from '../components/LoadingSkeleton';
+import ErrorBanner from '../components/ErrorBanner';
 import OrderHeader from '../components/ItemDetails/OrderHeader';
 import QuoteAlert from '../components/ItemDetails/QuoteAlert';
 import OrderInfoCard from '../components/ItemDetails/OrderInfoCard';
@@ -66,6 +67,14 @@ const ItemDetails = ({ onPrintReceipt }) => {
           onSave={isEditingCustomer ? editor.saveCustomer : editor.saveEdit}
           onCancel={isEditingCustomer ? editor.cancelEditCustomer : editor.cancelEdit}
         />
+
+        {editor.saveError && (
+          <ErrorBanner
+            message={editor.saveError}
+            onRetry={isEditingCustomer ? editor.saveCustomer : editor.saveEdit}
+            onDismiss={editor.clearSaveError}
+          />
+        )}
 
         {needsQuote && <QuoteAlert />}
 

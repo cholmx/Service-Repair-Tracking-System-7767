@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { FiDownload } from 'react-icons/fi';
 import SafeIcon from '../../common/SafeIcon';
 import { fetchActiveOrders, fetchArchivedOrders } from '../../services/orderService';
+import { describeError } from '../../utils/errors';
 
 
 const formatDate = (date) =>
@@ -50,7 +51,7 @@ const ExportPanel = ({ activeCount, onMessage }) => {
       onMessage({ type: 'success', text: `Successfully exported ${orders.length} service orders` });
     } catch (error) {
       console.error('Export error:', error);
-      onMessage({ type: 'error', text: 'Failed to export data. Please try again.' });
+      onMessage({ type: 'error', text: `Failed to export data. ${describeError(error)}` });
     } finally {
       setExporting(false);
     }

@@ -4,6 +4,7 @@ import SafeIcon from '../../common/SafeIcon';
 import { parseImportFile } from '../../services/importSchema';
 import { findExistingIds, importOrders } from '../../services/importService';
 import { validatePin } from '../../services/pinService';
+import { describeError } from '../../utils/errors';
 
 
 const PREVIEW_LIST_LIMIT = 10;
@@ -117,7 +118,7 @@ const ImportPanel = ({ onMessage, onImported }) => {
       setPreview({ ...parsed, existing, fileName: file.name });
     } catch (error) {
       console.error('Import preview error:', error);
-      onMessage({ type: 'error', text: 'Could not read the import file. Please try again.' });
+      onMessage({ type: 'error', text: `Could not check the import file. ${describeError(error)}` });
       reset();
     } finally {
       setBusy(false);
@@ -143,7 +144,7 @@ const ImportPanel = ({ onMessage, onImported }) => {
       reset();
     } catch (error) {
       console.error('Import error:', error);
-      onMessage({ type: 'error', text: 'Import failed and nothing was changed. Please try again.' });
+      onMessage({ type: 'error', text: `Import failed and nothing was changed. ${describeError(error)}` });
       reset();
     } finally {
       setBusy(false);

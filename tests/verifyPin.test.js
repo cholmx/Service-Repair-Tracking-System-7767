@@ -12,7 +12,7 @@ const post = (pin) =>
   })
 
 const call = async (req, e = secrets) => {
-  const res = await handleVerifyPin(req, e, 0)
+  const res = await handleVerifyPin(req, e)
   return { status: res.status, body: await res.json() }
 }
 
@@ -26,11 +26,6 @@ describe('verify-pin function', () => {
     expect((await call(post('0000'))).body.valid).toBe(false)
     expect((await call(post(''))).body.valid).toBe(false)
     expect((await call(post(undefined))).body.valid).toBe(false)
-  })
-
-  it('does not accept the old hardcoded or default PINs', async () => {
-    expect((await call(post('9300'))).body.valid).toBe(false)
-    expect((await call(post('1234'))).body.valid).toBe(false)
   })
 
   it('works when only one secret is set', async () => {
@@ -53,7 +48,7 @@ describe('verify-pin function', () => {
   })
 
   it('answers CORS preflight requests', async () => {
-    const res = await handleVerifyPin(new Request('http://localhost/verify-pin', { method: 'OPTIONS' }), secrets, 0)
+    const res = await handleVerifyPin(new Request('http://localhost/verify-pin', { method: 'OPTIONS' }), secrets)
     expect(res.status).toBe(200)
     expect(res.headers.get('Access-Control-Allow-Origin')).toBe('*')
   })

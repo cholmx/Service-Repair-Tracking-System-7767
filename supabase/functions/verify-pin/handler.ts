@@ -25,12 +25,9 @@ const matches = async (entered: string, secret: string) => {
   return diff === 0
 }
 
-const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms))
-
 export const handleVerifyPin = async (
   req: Request,
-  env: { get(key: string): string | undefined },
-  failureDelayMs = 500
+  env: { get(key: string): string | undefined }
 ): Promise<Response> => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders })
   if (req.method !== 'POST') return json({ valid: false, error: 'Method not allowed.' }, 405)
@@ -49,9 +46,5 @@ export const handleVerifyPin = async (
   }
 
   const results = await Promise.all(secrets.map((secret) => matches(pin, secret)))
-  const valid = results.some(Boolean)
-
-  if (!valid) await sleep(failureDelayMs)
-
-  return json({ valid })
+  return json({ valid: results.some(Boolean) })
 }

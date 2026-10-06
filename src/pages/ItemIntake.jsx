@@ -166,7 +166,7 @@ const ItemIntake = () => {
 
           {/* Customer Information */}
           <div className="mb-8">
-            <h2 className="text-xl font-semibold text-neutral-900 border-b border-neutral-200 pb-2 mb-6">Customer Information</h2>
+            <h2 className="text-xl font-bold text-neutral-900 border-b border-neutral-200 pb-2 mb-6">Customer Information</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
               <div>
                 <label className="flex items-center text-sm font-medium text-neutral-700 mb-2">

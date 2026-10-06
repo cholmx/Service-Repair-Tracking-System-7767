@@ -30,11 +30,11 @@ const OrderRow = ({ order, index, showArchived, onArchive, onDelete }) => (
       <div>
         {order.company ? (
           <>
-            <div className="text-sm font-medium text-neutral-900">{order.company}</div>
+            <div className="text-sm font-bold text-neutral-900">{order.company}</div>
             <div className="text-sm text-neutral-500">{order.customer_name}</div>
           </>
         ) : (
-          <div className="text-sm font-medium text-neutral-900">{order.customer_name}</div>
+          <div className="text-sm font-bold text-neutral-900">{order.customer_name}</div>
         )}
         <div className="text-sm text-neutral-500">{order.customer_phone}</div>
       </div>

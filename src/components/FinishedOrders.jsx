@@ -51,11 +51,11 @@ const FinishedOrders = ({ items, onPrintReceipt }) => {
                 </div>
                 
                 {item.company ? (
-                  <p className="font-medium text-neutral-900">
+                  <p className="font-bold text-neutral-900">
                     {item.company} <span className="text-neutral-600 font-normal">• {item.customer_name}</span>
                   </p>
                 ) : (
-                  <p className="font-medium text-neutral-900">{item.customer_name}</p>
+                  <p className="font-bold text-neutral-900">{item.customer_name}</p>
                 )}
                 
                 <p className="text-sm text-neutral-600 capitalize">

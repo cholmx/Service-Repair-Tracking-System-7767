@@ -20,7 +20,7 @@ const Field = ({ icon, label, children }) => (
 const CustomerCard = ({ item, isEditing, isEditingCustomer, customerEditData, onCustomerField, onEdit }) => (
   <div className="bg-white rounded-xl shadow-lg p-6">
     <div className="flex items-center justify-between mb-6">
-      <h2 className="text-xl font-semibold text-neutral-900">Customer Information</h2>
+      <h2 className="text-xl font-bold text-neutral-900">Customer Information</h2>
       {!isEditing && !isEditingCustomer && <EditButton onClick={onEdit} />}
     </div>
     <div className="space-y-4">
@@ -35,11 +35,11 @@ const CustomerCard = ({ item, isEditing, isEditingCustomer, customerEditData, on
           />
         ) : item.company ? (
           <div>
-            <div className="font-medium text-neutral-900">{item.company}</div>
+            <div className="font-bold text-neutral-900">{item.company}</div>
             <div className="text-neutral-700">{item.customer_name}</div>
           </div>
         ) : (
-          <div className="font-medium text-neutral-900">{item.customer_name}</div>
+          <div className="font-bold text-neutral-900">{item.customer_name}</div>
         )}
       </Field>
       <Field icon={FiBriefcase} label="Company:">

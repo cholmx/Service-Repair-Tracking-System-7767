@@ -68,11 +68,11 @@ const QuoteManagement = ({ items }) => {
                       </div>
                       {item.company ? (
                         <div>
-                          <p className="font-medium text-neutral-900 text-sm">{item.company}</p>
+                          <p className="font-bold text-neutral-900 text-sm">{item.company}</p>
                           <p className="text-xs text-neutral-600">{item.customer_name}</p>
                         </div>
                       ) : (
-                        <p className="font-medium text-neutral-900 text-sm">{item.customer_name}</p>
+                        <p className="font-bold text-neutral-900 text-sm">{item.customer_name}</p>
                       )}
                       <p className="text-xs text-neutral-600 capitalize">
                         {item.quantity}x {item.item_type}
@@ -136,11 +136,11 @@ const QuoteManagement = ({ items }) => {
                       </div>
                       {item.company ? (
                         <div>
-                          <p className="font-medium text-neutral-900 text-sm">{item.company}</p>
+                          <p className="font-bold text-neutral-900 text-sm">{item.company}</p>
                           <p className="text-xs text-neutral-600">{item.customer_name}</p>
                         </div>
                       ) : (
-                        <p className="font-medium text-neutral-900 text-sm">{item.customer_name}</p>
+                        <p className="font-bold text-neutral-900 text-sm">{item.customer_name}</p>
                       )}
                       <p className="text-xs text-neutral-600 capitalize">
                         {item.quantity}x {item.item_type}
@@ -150,7 +150,7 @@ const QuoteManagement = ({ items }) => {
                           <SafeIcon icon={FiClock} className="mr-1" />
                           {new Date(item.updated_at || item.created_at).toLocaleDateString()}
                         </div>
-                        {item.total && (
+                        {item.total > 0 && (
                           <div className="text-sm font-semibold text-purple-700">
                             ${item.total.toFixed(2)}
                           </div>

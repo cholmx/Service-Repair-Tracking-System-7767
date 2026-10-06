@@ -16,6 +16,12 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
+input::placeholder,
+textarea::placeholder {
+  color: #737373;
+  opacity: 1;
+}
+
 #root {
   width: 100%;
   height: 100%;

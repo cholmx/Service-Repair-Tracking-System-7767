@@ -1,8 +1,7 @@
 import React from 'react';
-import * as FiIcons from 'react-icons/fi';
+import { FiHash, FiShield, FiTool } from 'react-icons/fi';
 import SafeIcon from '../common/SafeIcon';
 
-const { FiTool, FiHash, FiShield } = FiIcons;
 
 const PrintReceipt = ({ item, onClose }) => {
   const handlePrint = () => {

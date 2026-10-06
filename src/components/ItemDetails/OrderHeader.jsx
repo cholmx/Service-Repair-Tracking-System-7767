@@ -1,9 +1,8 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import * as FiIcons from 'react-icons/fi';
+import { FiArrowLeft, FiEdit3, FiPrinter, FiSave, FiX } from 'react-icons/fi';
 import SafeIcon from '../../common/SafeIcon';
 
-const { FiArrowLeft, FiEdit3, FiSave, FiX, FiPrinter } = FiIcons;
 
 const OrderHeader = ({
   item,

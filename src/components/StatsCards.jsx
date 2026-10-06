@@ -1,10 +1,9 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
-import * as FiIcons from 'react-icons/fi';
+import { FiCheckCircle, FiClock, FiInbox, FiPackage, FiTool } from 'react-icons/fi';
 import SafeIcon from '../common/SafeIcon';
 
-const { FiPackage, FiClock, FiTool, FiCheckCircle, FiInbox } = FiIcons;
 
 const StatsCards = ({ stats }) => {
   const navigate = useNavigate();

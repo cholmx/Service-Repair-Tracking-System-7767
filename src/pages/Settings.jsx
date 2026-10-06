@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import * as FiIcons from 'react-icons/fi';
+import { FiDatabase, FiInfo } from 'react-icons/fi';
 import SafeIcon from '../common/SafeIcon';
 import { useServiceOrders } from '../hooks/useServiceOrders';
 import StatusMessage from '../components/Settings/StatusMessage';
@@ -8,7 +8,6 @@ import ExportPanel from '../components/Settings/ExportPanel';
 import ImportPanel from '../components/Settings/ImportPanel';
 import SessionPanel from '../components/Settings/SessionPanel';
 
-const { FiInfo, FiDatabase } = FiIcons;
 
 const Settings = () => {
   const { items, refresh } = useServiceOrders();

@@ -1,10 +1,9 @@
 import React from 'react';
-import * as FiIcons from 'react-icons/fi';
+import { FiBriefcase, FiMail, FiPhone, FiUser } from 'react-icons/fi';
 import SafeIcon from '../../common/SafeIcon';
 import { EditButton } from './OrderInfoCard';
 import { inputClasses } from './styles';
 
-const { FiUser, FiPhone, FiMail, FiBuilding } = FiIcons;
 
 const fullWidthInput = `${inputClasses} mt-1 w-full`;
 
@@ -43,7 +42,7 @@ const CustomerCard = ({ item, isEditing, isEditingCustomer, customerEditData, on
           <div className="font-medium text-neutral-900">{item.customer_name}</div>
         )}
       </Field>
-      <Field icon={FiBuilding} label="Company:">
+      <Field icon={FiBriefcase} label="Company:">
         {isEditingCustomer ? (
           <input
             type="text"

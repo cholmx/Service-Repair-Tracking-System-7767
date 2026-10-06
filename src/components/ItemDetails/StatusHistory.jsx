@@ -1,9 +1,8 @@
 import React from 'react';
-import * as FiIcons from 'react-icons/fi';
+import { FiClock } from 'react-icons/fi';
 import SafeIcon from '../../common/SafeIcon';
 import StatusBadge from '../StatusBadge';
 
-const { FiClock } = FiIcons;
 
 const StatusHistory = ({ history }) => (
   <div className="bg-white rounded-xl shadow-lg p-6 mt-8">

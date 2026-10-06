@@ -1,11 +1,10 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import * as FiIcons from 'react-icons/fi';
+import { FiClock, FiEye, FiPackage } from 'react-icons/fi';
 import SafeIcon from '../common/SafeIcon';
 import StatusBadge from './StatusBadge';
 
-const { FiEye, FiClock, FiPackage } = FiIcons;
 
 const ReceivedOrders = ({ items }) => {
   // Show items that are newly received

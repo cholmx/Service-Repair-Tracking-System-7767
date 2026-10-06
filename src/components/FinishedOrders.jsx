@@ -1,11 +1,10 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import * as FiIcons from 'react-icons/fi';
+import { FiClock, FiEye, FiPrinter } from 'react-icons/fi';
 import SafeIcon from '../common/SafeIcon';
 import StatusBadge from './StatusBadge';
 
-const { FiEye, FiPrinter, FiClock } = FiIcons;
 
 const FinishedOrders = ({ items, onPrintReceipt }) => {
   const finishedItems = items.filter(item => item.status === 'completed');

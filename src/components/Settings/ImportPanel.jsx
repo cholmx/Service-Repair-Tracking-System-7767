@@ -1,11 +1,10 @@
 import React, { useState } from 'react';
-import * as FiIcons from 'react-icons/fi';
+import { FiAlertCircle, FiUpload } from 'react-icons/fi';
 import SafeIcon from '../../common/SafeIcon';
 import { parseImportFile } from '../../services/importSchema';
 import { findExistingIds, importOrders } from '../../services/importService';
 import { validatePin } from '../../services/pinService';
 
-const { FiUpload, FiAlertCircle } = FiIcons;
 
 const PREVIEW_LIST_LIMIT = 10;
 

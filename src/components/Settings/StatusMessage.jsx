@@ -1,8 +1,7 @@
 import React from 'react';
-import * as FiIcons from 'react-icons/fi';
+import { FiAlertCircle, FiCheck, FiInfo } from 'react-icons/fi';
 import SafeIcon from '../../common/SafeIcon';
 
-const { FiCheck, FiAlertCircle, FiInfo } = FiIcons;
 
 const styles = {
   success: 'bg-green-50 text-green-800',

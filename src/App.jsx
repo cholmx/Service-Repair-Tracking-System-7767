@@ -1,18 +1,19 @@
-import React, { useState } from 'react'
+import React, { Suspense, lazy, useState } from 'react'
 import { HashRouter as Router, Routes, Route, Navigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 
 // Components
 import Navbar from './components/Navbar'
-import PrintReceipt from './components/PrintReceipt'
+import LoadingSkeleton from './components/LoadingSkeleton'
 
-// Pages
-import Dashboard from './pages/Dashboard'
-import ItemIntake from './pages/ItemIntake'
-import TrackingView from './pages/TrackingView'
-import ItemDetails from './pages/ItemDetails'
-import Settings from './pages/Settings'
-import PinEntryPage from './pages/PinEntryPage'
+// Pages and the receipt are loaded when first needed so the first screen downloads less code.
+const PrintReceipt = lazy(() => import('./components/PrintReceipt'))
+const Dashboard = lazy(() => import('./pages/Dashboard'))
+const ItemIntake = lazy(() => import('./pages/ItemIntake'))
+const TrackingView = lazy(() => import('./pages/TrackingView'))
+const ItemDetails = lazy(() => import('./pages/ItemDetails'))
+const Settings = lazy(() => import('./pages/Settings'))
+const PinEntryPage = lazy(() => import('./pages/PinEntryPage'))
 
 // Contexts
 import { PinAuthProvider, usePinAuth } from './contexts/PinAuthContext'
@@ -42,7 +43,11 @@ const ProtectedApp = () => {
   }
 
   if (!isAuthenticated) {
-    return <PinEntryPage />
+    return (
+      <Suspense fallback={null}>
+        <PinEntryPage />
+      </Suspense>
+    )
   }
 
   return (
@@ -54,18 +59,22 @@ const ProtectedApp = () => {
           animate={{ opacity: 1 }}
           transition={{ duration: 0.3 }}
         >
-          <Routes>
-            <Route path="/" element={<Navigate to="/dashboard" replace />} />
-            <Route path="/dashboard" element={<Dashboard onPrintReceipt={handlePrintReceipt} />} />
-            <Route path="/intake" element={<ItemIntake />} />
-            <Route path="/tracking" element={<TrackingView />} />
-            <Route path="/item/:id" element={<ItemDetails onPrintReceipt={handlePrintReceipt} />} />
-            <Route path="/settings" element={<Settings />} />
-          </Routes>
+          <Suspense fallback={<LoadingSkeleton type="default" />}>
+            <Routes>
+              <Route path="/" element={<Navigate to="/dashboard" replace />} />
+              <Route path="/dashboard" element={<Dashboard onPrintReceipt={handlePrintReceipt} />} />
+              <Route path="/intake" element={<ItemIntake />} />
+              <Route path="/tracking" element={<TrackingView />} />
+              <Route path="/item/:id" element={<ItemDetails onPrintReceipt={handlePrintReceipt} />} />
+              <Route path="/settings" element={<Settings />} />
+            </Routes>
+          </Suspense>
         </motion.main>
 
         {printItem && (
-          <PrintReceipt item={printItem} onClose={closePrintReceipt} />
+          <Suspense fallback={null}>
+            <PrintReceipt item={printItem} onClose={closePrintReceipt} />
+          </Suspense>
         )}
       </div>
     </ServiceOrdersProvider>

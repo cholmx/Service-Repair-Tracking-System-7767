@@ -2,11 +2,10 @@ import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { useServiceOrders } from '../hooks/useServiceOrders';
-import * as FiIcons from 'react-icons/fi';
+import { FiCalendar, FiDollarSign, FiFileText, FiHash, FiHome, FiMail, FiMinus, FiPackage, FiPhone, FiPlus, FiSave, FiUser } from 'react-icons/fi';
 import SafeIcon from '../common/SafeIcon';
 import LoadingSkeleton from '../components/LoadingSkeleton';
 
-const { FiUser, FiPhone, FiMail, FiPackage, FiFileText, FiCalendar, FiSave, FiPlus, FiMinus, FiHome, FiHash, FiDollarSign } = FiIcons;
 
 const ItemIntake = () => {
   const navigate = useNavigate();

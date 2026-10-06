@@ -1,9 +1,8 @@
 import React from 'react';
-import * as FiIcons from 'react-icons/fi';
+import { FiEdit3, FiHash, FiPackage } from 'react-icons/fi';
 import SafeIcon from '../../common/SafeIcon';
 import { inputClasses } from './styles';
 
-const { FiEdit3, FiPackage, FiHash } = FiIcons;
 
 export const EditButton = ({ onClick }) => (
   <button

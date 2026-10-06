@@ -1,10 +1,9 @@
 import React from 'react';
-import * as FiIcons from 'react-icons/fi';
+import { FiPlus, FiShield, FiTrash2 } from 'react-icons/fi';
 import SafeIcon from '../../common/SafeIcon';
 import { formatMoney } from '../../utils/pricing';
 import { inputClasses } from './styles';
 
-const { FiPlus, FiTrash2, FiShield } = FiIcons;
 
 const WarrantyBadge = () => (
   <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">

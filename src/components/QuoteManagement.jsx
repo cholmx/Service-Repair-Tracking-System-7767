@@ -1,11 +1,10 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import * as FiIcons from 'react-icons/fi';
+import { FiAlertCircle, FiClock, FiDollarSign, FiEye, FiFileText } from 'react-icons/fi';
 import SafeIcon from '../common/SafeIcon';
 import StatusBadge from './StatusBadge';
 
-const { FiEye, FiClock, FiDollarSign, FiFileText, FiAlertCircle } = FiIcons;
 
 const QuoteManagement = ({ items }) => {
   // Get items that need quotes or are awaiting quote approval

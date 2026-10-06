@@ -1,9 +1,8 @@
 import React, { useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import * as FiIcons from 'react-icons/fi';
+import { FiAlertCircle, FiCheck, FiInfo, FiX } from 'react-icons/fi';
 import SafeIcon from '../common/SafeIcon';
 
-const { FiCheck, FiAlertCircle, FiInfo, FiX } = FiIcons;
 
 const Toast = ({ message, type = 'success', onClose, onUndo, autoClose = true, duration = 5000 }) => {
   useEffect(() => {

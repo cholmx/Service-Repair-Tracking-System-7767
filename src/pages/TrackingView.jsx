@@ -2,13 +2,12 @@ import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Link, useSearchParams } from 'react-router-dom';
 import { useServiceOrders } from '../hooks/useServiceOrders';
-import * as FiIcons from 'react-icons/fi';
+import { FiArchive, FiEye, FiFilter, FiHash, FiRefreshCw, FiSearch, FiTrash2, FiX } from 'react-icons/fi';
 import SafeIcon from '../common/SafeIcon';
 import StatusBadge from '../components/StatusBadge';
 import LoadingSkeleton from '../components/LoadingSkeleton';
 import ToastContainer from '../components/ToastContainer';
 
-const { FiSearch, FiFilter, FiEye, FiArchive, FiX, FiRefreshCw, FiTrash2, FiHash } = FiIcons;
 
 const TrackingView = () => {
   const {

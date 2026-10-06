@@ -1,10 +1,9 @@
 import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import * as FiIcons from 'react-icons/fi';
+import { FiHome, FiMenu, FiPlus, FiSearch, FiSettings, FiTool, FiX } from 'react-icons/fi';
 import SafeIcon from '../common/SafeIcon';
 
-const { FiTool, FiHome, FiPlus, FiSearch, FiMenu, FiX, FiSettings } = FiIcons;
 
 const Navbar = () => {
   const location = useLocation();

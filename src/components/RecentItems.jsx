@@ -1,11 +1,10 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import * as FiIcons from 'react-icons/fi';
+import { FiClock, FiEye } from 'react-icons/fi';
 import SafeIcon from '../common/SafeIcon';
 import StatusBadge from './StatusBadge';
 
-const { FiEye, FiClock } = FiIcons;
 
 const RecentItems = ({ items }) => {
   // Show items that are ready for pickup or delivery

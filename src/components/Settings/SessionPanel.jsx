@@ -1,9 +1,8 @@
 import React from 'react';
-import * as FiIcons from 'react-icons/fi';
+import { FiLock } from 'react-icons/fi';
 import SafeIcon from '../../common/SafeIcon';
 import { usePinAuth } from '../../contexts/PinAuthContext';
 
-const { FiLock } = FiIcons;
 
 const formatRemaining = (sessionInfo) => {
   if (!sessionInfo) return 'Session expired';

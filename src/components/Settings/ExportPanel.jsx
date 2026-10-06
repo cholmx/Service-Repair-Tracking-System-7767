@@ -1,9 +1,8 @@
 import React, { useState } from 'react';
-import * as FiIcons from 'react-icons/fi';
+import { FiDownload } from 'react-icons/fi';
 import SafeIcon from '../../common/SafeIcon';
 import { fetchActiveOrders, fetchArchivedOrders } from '../../services/orderService';
 
-const { FiDownload } = FiIcons;
 
 const formatDate = (date) =>
   `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;

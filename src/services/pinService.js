@@ -2,7 +2,9 @@ import supabase from '../lib/supabase';
 
 export const validatePin = async (enteredPin) => {
   try {
-    const { data, error } = await supabase.rpc('verify_pin', { p_pin: enteredPin });
+    const { data, error } = await supabase.functions.invoke('verify-pin', {
+      body: { pin: enteredPin }
+    });
 
     if (error) {
       console.error('Error verifying PIN:', error);

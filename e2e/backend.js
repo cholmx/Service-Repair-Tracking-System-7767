@@ -48,6 +48,27 @@ export const defaultArchived = () => [
   makeOrder({ id: '300', status: 'archived', archived_at: '2026-09-01T10:00:00Z', customer_name: 'Old Customer', company: null })
 ]
 
+const DAY = 24 * 60 * 60 * 1000
+
+export const makeBackup = (source, daysAgo, orders) => {
+  const data = {
+    version: '1.0',
+    exportDate: new Date().toISOString(),
+    recordCount: orders.length,
+    includesArchived: true,
+    data: orders.map(({ status_history, ...order }) => ({ ...order, statusHistory: status_history }))
+  }
+  return {
+    id: crypto.randomUUID(),
+    created_at: new Date(Date.now() - daysAgo * DAY).toISOString(),
+    source,
+    order_count: orders.length,
+    history_count: orders.reduce((sum, o) => sum + o.status_history.length, 0),
+    size_bytes: JSON.stringify(data).length,
+    data
+  }
+}
+
 const recompute = (order) => {
   const totals = calculateTotals({ parts: order.parts, labor: order.labor, taxRate: order.tax_rate })
   Object.assign(order, {
@@ -61,10 +82,15 @@ const recompute = (order) => {
 
 // A stand-in for Supabase: the PIN function, the REST tables, the order functions and the
 // realtime socket. `state` holds the data and a log of requests so tests can assert on both.
-export const installBackend = async (page, { orders, archived } = {}) => {
+export const installBackend = async (page, { orders, archived, backups, backupsMissing = false } = {}) => {
   const state = {
     orders: orders ?? defaultOrders(),
     archived: archived ?? defaultArchived(),
+    // By default there is one weekly backup from two days ago that also holds an order (650)
+    // that has since been deleted, so restoring it has something to bring back.
+    backups: backups ?? [
+      makeBackup('scheduled', 2, [...defaultOrders(), makeOrder({ id: '650', customer_name: 'Deleted Later' })])
+    ],
     requests: [],
     failWrites: false,
     failReads: false,
@@ -136,6 +162,27 @@ export const installBackend = async (page, { orders, archived } = {}) => {
         return respond(hits)
       }
       return respond([])
+    }
+
+    if (path === 'service_order_backups' && request.method() === 'GET') {
+      if (backupsMissing) {
+        return respond({ code: 'PGRST205', message: "Could not find the table 'public.service_order_backups' in the schema cache" }, 404)
+      }
+      if (search.includes('select=data')) {
+        const id = search.match(/id=eq\.([\w-]+)/)?.[1]
+        return respond(state.backups.filter((b) => b.id === id).map((b) => ({ data: b.data })))
+      }
+      return respond(
+        [...state.backups]
+          .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
+          .map(({ data, ...summary }) => summary)
+      )
+    }
+
+    if (path === 'rpc/create_backup') {
+      const backup = makeBackup('manual', 0, [...state.orders, ...state.archived])
+      state.backups.unshift(backup)
+      return respond({ id: backup.id, created_at: backup.created_at, order_count: backup.order_count })
     }
 
     if (path === 'service_orders' && request.method() === 'DELETE') {

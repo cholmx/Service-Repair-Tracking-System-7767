@@ -1,6 +1,6 @@
 // Turns whatever a Supabase call threw into a sentence a shop user can act on.
 
-const MIGRATION_CODES = ['PGRST202', '42883', 'PGRST204', '42703']
+const MIGRATION_CODES = ['PGRST202', '42883', 'PGRST204', '42703', 'PGRST205', '42P01']
 
 export const describeError = (error, online = typeof navigator === 'undefined' ? true : navigator.onLine) => {
   if (!online) {

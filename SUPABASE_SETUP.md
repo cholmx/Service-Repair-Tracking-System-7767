@@ -44,6 +44,14 @@ A trigger on `service_orders` recomputes the money columns from `parts`, `labor`
 
 All migrations are safe to re-run. Apply them in order. The two function migrations must be applied before deploying a version of the app that calls them.
 
+## Weekly backups
+
+`20261006150000_backups.sql` creates the backup table and functions. `20261006150100_schedule_weekly_backup.sql` schedules the job with `pg_cron` for Sundays at 09:00 UTC (about 4 or 5 in the morning in the US) and keeps the newest 12.
+
+If the second migration stops with "pg_cron is not available", enable the extension (Supabase dashboard, Database, Extensions, pg_cron) and run it again. It is safe to run more than once. To check the job, run `select * from cron.job;`, and to see the results, run `select * from service_order_backups order by created_at desc;`.
+
+The Settings page lists the backups, lets you download or restore one, and warns when no automatic backup has run for more than 8 days. Backups are stored in the same Supabase project as your data, so download one now and then to keep a copy somewhere else.
+
 ## Data Backup & Restore
 
 The Settings page exports everything to JSON. Import shows a preview (new, overwritten and invalid rows) and asks for your PIN before it writes anything.

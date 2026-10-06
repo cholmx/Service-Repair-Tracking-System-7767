@@ -6,12 +6,19 @@ import { useServiceOrders } from '../hooks/useServiceOrders';
 import StatusMessage from '../components/Settings/StatusMessage';
 import ExportPanel from '../components/Settings/ExportPanel';
 import ImportPanel from '../components/Settings/ImportPanel';
+import BackupPanel from '../components/Settings/BackupPanel';
 import SessionPanel from '../components/Settings/SessionPanel';
 
 
 const Settings = () => {
   const { items, refresh } = useServiceOrders();
   const [message, setMessage] = useState({ type: '', text: '' });
+  const [restoreRequest, setRestoreRequest] = useState(null);
+
+  const handleRestore = (request) => {
+    setRestoreRequest(request);
+    document.getElementById('import-panel')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  };
 
   return (
     <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -31,7 +38,9 @@ const Settings = () => {
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
             <ExportPanel activeCount={items.length} onMessage={setMessage} />
-            <ImportPanel onMessage={setMessage} onImported={refresh} />
+            <div id="import-panel">
+              <ImportPanel onMessage={setMessage} onImported={refresh} restoreRequest={restoreRequest} />
+            </div>
           </div>
 
           <div className="mt-6 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
@@ -49,6 +58,8 @@ const Settings = () => {
             </div>
           </div>
         </div>
+
+        <BackupPanel onMessage={setMessage} onRestore={handleRestore} />
 
         <SessionPanel />
       </motion.div>

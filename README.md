@@ -12,6 +12,7 @@ A service order management system for repair shops, built with React and Supabas
 - **Print receipts** for customers.
 - **Archive**: move finished orders out of the way. Archived orders load only when you open them.
 - **Backup and restore**: export everything to JSON, and import it back after a preview and PIN confirmation.
+- **Automatic weekly backups**: the database saves a snapshot every Sunday and keeps the last 12. Settings lists them with Download and Restore, and warns if the schedule stops.
 - **Returning customers**: typing a name or phone on the intake form suggests people from past orders and fills in the rest.
 - **Live updates**: changes made on one device show up on the others within a couple of seconds.
 - **Works through bad connections**: an offline banner, readable error messages and a Try again button instead of silent failures.
@@ -74,6 +75,7 @@ Writes go through Postgres functions so they are atomic:
 | `create_service_orders` | Creates one order per item with fresh IDs and the first history row, all or nothing |
 | `update_service_order` | Updates only the fields you send and records a history row when the status is set |
 | `import_service_orders` | Upserts orders and history from a backup, all or nothing |
+| `create_backup` | Saves a manual snapshot (the Back up now button) |
 
 A trigger recomputes `parts_total`, `labor_total`, `subtotal`, `tax` and `total` from the line items on every write, using exact decimal math. The app cannot store totals that disagree with the line items.
 
@@ -85,6 +87,12 @@ A trigger recomputes `parts_total`, `labor_total`, `subtotal`, `tax` and `total`
 ```
 
 Lines with `isWarranty: true` are not charged.
+
+### Backups
+
+`service_order_backups` holds full snapshots in the same JSON format as the Settings export. A `pg_cron` job (`weekly-service-order-backup`, Sundays 09:00 UTC) calls `_create_backup('scheduled')`, which keeps the newest 12 weekly snapshots. Manual snapshots are trimmed separately to the newest 5, so pressing the button can never push out a weekly one. The app can read backups but cannot add, change or delete them, and cannot run the scheduled job.
+
+Backups live in the same Supabase project as the data. They protect against mistakes such as a bad import or a deleted order. To protect against losing the whole project, download one now and then from Settings.
 
 ### Live updates
 

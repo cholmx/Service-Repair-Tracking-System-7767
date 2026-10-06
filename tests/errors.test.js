@@ -20,6 +20,7 @@ describe('describeError', () => {
   it('points at migrations when a database function or column is missing', () => {
     expect(describeError({ code: 'PGRST202', message: 'Could not find the function' }, true)).toMatch(/migrations/)
     expect(describeError({ code: '42883', message: 'function does not exist' }, true)).toMatch(/migrations/)
+    expect(describeError({ code: 'PGRST205', message: 'Could not find the table' }, true)).toMatch(/migrations/)
   })
 
   it('passes through other database messages and handles empty errors', () => {

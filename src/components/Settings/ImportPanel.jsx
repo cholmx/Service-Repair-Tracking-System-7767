@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { FiAlertCircle, FiUpload } from 'react-icons/fi';
 import SafeIcon from '../../common/SafeIcon';
 import { parseImportFile } from '../../services/importSchema';
@@ -87,7 +87,9 @@ const ImportPreview = ({ preview, pin, setPin, pinError, busy, onConfirm, onCanc
 };
 
 // Import is two steps: read and validate the file to show what would change, then confirm with the PIN.
-const ImportPanel = ({ onMessage, onImported }) => {
+// `restoreRequest` ({ id, name, text }) lets another part of the page, such as the backup list,
+// open the same preview and PIN confirmation with a file it already has.
+const ImportPanel = ({ onMessage, onImported, restoreRequest }) => {
   const [preview, setPreview] = useState(null);
   const [pin, setPin] = useState('');
   const [pinError, setPinError] = useState('');
@@ -101,21 +103,18 @@ const ImportPanel = ({ onMessage, onImported }) => {
     setFileInputKey((key) => key + 1);
   };
 
-  const handleFileChange = async (event) => {
-    const file = event.target.files[0];
-    if (!file) return;
-
+  const startPreview = useCallback(async (text, fileName) => {
     onMessage({ type: '', text: '' });
     setBusy(true);
     try {
-      const parsed = parseImportFile(await file.text());
+      const parsed = parseImportFile(text);
       if (parsed.fileError) {
         onMessage({ type: 'error', text: parsed.fileError });
         reset();
         return;
       }
       const existing = await findExistingIds(parsed.orders.map((order) => order.id));
-      setPreview({ ...parsed, existing, fileName: file.name });
+      setPreview({ ...parsed, existing, fileName });
     } catch (error) {
       console.error('Import preview error:', error);
       onMessage({ type: 'error', text: `Could not check the import file. ${describeError(error)}` });
@@ -123,7 +122,16 @@ const ImportPanel = ({ onMessage, onImported }) => {
     } finally {
       setBusy(false);
     }
+  }, [onMessage]);
+
+  const handleFileChange = async (event) => {
+    const file = event.target.files[0];
+    if (file) await startPreview(await file.text(), file.name);
   };
+
+  useEffect(() => {
+    if (restoreRequest) startPreview(restoreRequest.text, restoreRequest.name);
+  }, [restoreRequest, startPreview]);
 
   const handleConfirm = async () => {
     setBusy(true);

@@ -3,21 +3,11 @@ import { FiDownload } from 'react-icons/fi';
 import SafeIcon from '../../common/SafeIcon';
 import { fetchActiveOrders, fetchArchivedOrders } from '../../services/orderService';
 import { describeError } from '../../utils/errors';
+import { downloadText } from '../../utils/download';
 
 
 const formatDate = (date) =>
   `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
-
-const download = (filename, text) => {
-  const url = URL.createObjectURL(new Blob([text], { type: 'application/json' }));
-  const link = document.createElement('a');
-  link.href = url;
-  link.download = filename;
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
-  URL.revokeObjectURL(url);
-};
 
 const ExportPanel = ({ activeCount, onMessage }) => {
   const [includeArchived, setIncludeArchived] = useState(true);
@@ -34,7 +24,7 @@ const ExportPanel = ({ activeCount, onMessage }) => {
         ...(includeArchived ? await fetchArchivedOrders() : [])
       ];
 
-      download(
+      downloadText(
         `servicetracker-export-${formatDate(new Date())}.json`,
         JSON.stringify(
           {
